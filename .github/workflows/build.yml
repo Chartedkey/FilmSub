@@ -1,10 +1,10 @@
 name: Сборка FilmSub.exe
 
+# Сборка запускается при каждом изменении в main.
+# Если номер версии в filmsub/__init__.py новый — публикуется релиз vX.Y.Z с FilmSub.exe.
 on:
   push:
-    tags: ["v*"]
-  release:
-    types: [published]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -20,6 +20,20 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Определить версию
+        id: ver
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(python -c "import re;print(re.search(r'__version__ = \"(.+?)\"', open('filmsub/__init__.py', encoding='utf-8').read()).group(1))")
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VER" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"; echo "Версия $VER уже опубликована — только проверочная сборка"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"; echo "Новая версия $VER — будет опубликован релиз"
+          fi
+
       - name: Установить PyInstaller
         run: python -m pip install --upgrade pip pyinstaller
 
@@ -34,11 +48,15 @@ jobs:
       - name: Сохранить сборку
         uses: actions/upload-artifact@v4
         with:
-          name: FilmSub
+          name: FilmSub-${{ steps.ver.outputs.version }}
           path: dist/FilmSub.exe
 
       - name: Опубликовать релиз
-        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+        if: steps.ver.outputs.new == 'true'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: FilmSub ${{ steps.ver.outputs.version }}
           files: dist/FilmSub.exe
+          generate_release_notes: true
