@@ -285,6 +285,22 @@ def _alass_once(alass, ref, cues, tmp, env, stop_flag, extra, tag) -> list[Cue]:
     return read_srt(out)
 
 
+_NOSPLIT_FLAG: dict[str, str] = {}
+
+
+def nosplit_flag(alass: str) -> str:
+    """Флаг «без разрывов» в этой версии alass: в выпуске 2.0 — --no-split, в новых — --no-splits."""
+    if alass not in _NOSPLIT_FLAG:
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        try:
+            out = subprocess.run([alass, "--help"], capture_output=True, timeout=30, creationflags=flags)
+            text = (out.stdout + out.stderr).decode("utf-8", "replace")
+        except (OSError, subprocess.SubprocessError):
+            text = ""
+        _NOSPLIT_FLAG[alass] = "--no-splits" if "--no-splits" in text else "--no-split"
+    return _NOSPLIT_FLAG[alass]
+
+
 def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
     """Сверяет реплики со звуком. Возвращает (новые реплики, отчёт); реплики не меняет.
 
@@ -311,7 +327,7 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
         if len(tracks) > 1 and track.n != 0:
             ref = os.path.join(tmp, "audio.mkv")
             _extract_track(video, track.n, ffmpeg, ref, stop_flag)
-        whole = _alass_once(alass, ref, cues, tmp, env, stop_flag, ["--no-splits"], "whole")
+        whole = _alass_once(alass, ref, cues, tmp, env, stop_flag, [nosplit_flag(alass)], "whole")
         parts = _alass_once(alass, ref, cues, tmp, env, stop_flag, [], "parts")
     rep_whole = analyze_shift(cues, whole)
     rep = analyze_shift(cues, parts)

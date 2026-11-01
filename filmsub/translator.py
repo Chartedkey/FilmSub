@@ -437,7 +437,8 @@ class FileTranslator:
             data = {"notes": notes, "ru": {str(i): c.ru for i, c in enumerate(cues) if c.ru},
                     "entries": [[e.en, e.ru, e.note] for e in (entries or [])],
                     "voices": getattr(self, "_voices", None),
-                    "timing": getattr(self, "_timing", None)}
+                    "timing": getattr(self, "_timing", None),
+                    "sync": getattr(self, "_sync", None)}
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False)
@@ -553,6 +554,8 @@ class FileTranslator:
                 raise Stopped()
             self.log(f"  ⚠ Синхронизация не удалась ({e}) — голоса не определяю, переведу без них")
             return
+        # итог сверки пригодится, чтобы не запускать alass второй раз после перевода
+        self._sync = [rep.status, rep.summary]
         if rep.status == "rejected":
             self.log("  ⚠ Сверка со звуком не удалась — голоса не определяю, переведу без них")
             return
@@ -679,7 +682,7 @@ class FileTranslator:
             if mode == "alt":
                 target = alt_output_path(path)
 
-        self._voices = self._timing = None
+        self._voices = self._timing = self._sync = None
         self._file_year = film_year(path)
         out_ru = output_path_for(path)
         self._voice_labels_path = (out_ru[:-len(".ru.srt")] if out_ru.endswith(".ru.srt")
@@ -704,6 +707,7 @@ class FileTranslator:
                 notes = data.get("notes", "")
                 entries = [Entry(en=a, ru=b, note=c) for a, b, c in data.get("entries", [])]
                 self._voices = data.get("voices")
+                self._sync = data.get("sync")
                 self._timing = data.get("timing")
                 if self._timing and len(self._timing) == len(cues):
                     for c, (a, b) in zip(cues, self._timing):
@@ -761,7 +765,8 @@ class FileTranslator:
         if failed:
             msg += f" (не переведено реплик: {failed})"
         self.log(msg)
-        return {"status": "done", "output": src.output, "failed": failed}
+        return {"status": "done", "output": src.output, "failed": failed,
+                "sync": getattr(self, "_sync", None)}
 
     def _run_parallel(self, system, cues, todo, cache, notes, total, entries=None):
         bs = max(5, int(self.s.batch_size))

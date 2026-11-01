@@ -119,6 +119,8 @@ class App(tk.Tk):
         self.sync_btn.pack(side="left", padx=6)
         self.cmp_btn = ttk.Button(sel, text="Сравнить стили перевода…", command=self.start_compare)
         self.cmp_btn.pack(side="left")
+        self.film_btn = ttk.Button(sel, text="Указать фильм…", command=self.choose_film)
+        self.film_btn.pack(side="left", padx=6)
 
         run = ttk.Frame(f)
         run.pack(fill="x")
@@ -650,7 +652,7 @@ class App(tk.Tk):
     # ------------------------------------------------------------- запуск
     def _launch(self, target, *args):
         self.stop_event.clear()
-        for b in (self.start_btn, self.sync_btn, self.cmp_btn):
+        for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn):
             b.configure(state="disabled")
         self.stop_btn.configure(state="normal")
         self.pb["value"] = 0
@@ -761,6 +763,40 @@ class App(tk.Tk):
             return v
         v = s.video_map.get(os.path.normcase(os.path.abspath(path)))
         return v if v and os.path.exists(v) else None
+
+    def choose_film(self):
+        """Указать (или сменить) файл фильма для выбранных субтитров — для голосов и синхронизации."""
+        if self.worker:
+            return
+        jobs = self._selected_jobs()
+        if len(jobs) != 1:
+            messagebox.showinfo("FilmSub", "Выберите в списке одни субтитры, для которых нужно указать фильм.")
+            return
+        path = jobs[0][1]
+        s = self.collect_settings()
+        if path.lower().endswith((".mkv", ".mp4", ".avi", ".m4v", ".mov", ".ts", ".m2ts", ".webm")):
+            messagebox.showinfo("FilmSub", "Это уже сам фильм — указывать ничего не нужно.")
+            return
+        key = os.path.normcase(os.path.abspath(path))
+        cur = s.video_map.get(key)
+        near = find_video_for(path)
+        f = filedialog.askopenfilename(
+            parent=self, title=f"Фильм для {os.path.basename(path)}",
+            initialdir=os.path.dirname(cur or path),
+            filetypes=[("Видео", "*.mkv *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"), ("Все файлы", "*.*")])
+        if not f:
+            if cur and messagebox.askyesno("FilmSub", f"Сейчас для этих субтитров указан фильм:\n{cur}\n\n"
+                                                      "Забыть его? Тогда перед переводом программа спросит снова."):
+                s.video_map.pop(key, None)
+                save_settings(s)
+                self.log(f"Связь {os.path.basename(path)} → {os.path.basename(cur)} удалена")
+            return
+        s.video_map[key] = os.path.abspath(f)
+        save_settings(s)
+        self.log(f"Фильм для {os.path.basename(path)}: {f}")
+        if near and os.path.normcase(near) != os.path.normcase(os.path.abspath(f)):
+            self.log(f"  (рядом с субтитрами лежит {os.path.basename(near)} — он важнее; уберите его, "
+                     "если нужен указанный фильм)")
 
     def ask_videos(self, paths: list[str], s: Settings) -> bool:
         """Для субтитров без фильма рядом предлагает указать файл фильма. False — отмена."""
@@ -976,6 +1012,9 @@ class App(tk.Tk):
                 video = None
                 if s.prompt_style == "new" and s.detect_voices:
                     video = self._video_for(path, s)
+                    if video and not find_video_for(path):
+                        self.q.put(("log", f"Фильм для голосов: {video} (указан ранее; сменить — кнопка "
+                                           "«Указать фильм…»)"))
                     if video and not find_tools() and not self._ensure_tools():
                         video = None
                 res = tr.translate(path, existing=mode, video=video)
@@ -1001,8 +1040,16 @@ class App(tk.Tk):
                 if res.get("failed"):
                     label += f" · пропусков {res['failed']}"
                 if s.sync_after and not self.stop_event.is_set():
-                    self.q.put(("status", iid, "синхронизация…", None))
-                    sync_label = self._sync_one(iid, path, s, res.get("output"))
+                    done_sync = res.get("sync")
+                    if done_sync:
+                        # сверка уже сделана при определении голосов — тайминги в файле
+                        sync_label = {"changed": "синхронизировано", "unchanged": "уже синхронно",
+                                      "rejected": "синхр. отклонена"}.get(done_sync[0], "")
+                        if done_sync[0] == "changed":
+                            self.q.put(("log", f"  ✔ Русские субтитры синхронизированы: {done_sync[1]}"))
+                    else:
+                        self.q.put(("status", iid, "синхронизация…", None))
+                        sync_label = self._sync_one(iid, path, s, res.get("output"))
                     label += " · " + sync_label
                 self.q.put(("status", iid, label, "done"))
             elif st == "stopped":
@@ -1028,7 +1075,7 @@ class App(tk.Tk):
                     self.cost_lbl.configure(text=f"Потрачено: {approx}${msg[1]:.3f}")
                 elif kind == "finished":
                     self.worker = None
-                    for b in (self.start_btn, self.sync_btn, self.cmp_btn):
+                    for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn):
                         b.configure(state="normal")
                     self.stop_btn.configure(state="disabled")
                     stopped = self.stop_event.is_set()
