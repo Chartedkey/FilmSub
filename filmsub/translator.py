@@ -721,10 +721,14 @@ class FileTranslator:
                 pass
 
         try:
-            if (video and self.style == "new" and getattr(self.s, "detect_voices", True)
+            if (video and self.style == "new" and getattr(self.s, "detect_voices", False)
                     and not getattr(self, "_voices", None)):
                 self._prepare_voices(video, cues)
                 self._save_cache(cache, notes, cues, entries)
+            elif self._voices and getattr(self.s, "save_voice_labels", False):
+                from . import voices as V   # голоса из сохранённого прогресса — файл пометок всё равно нужен
+                write_srt(self._voice_labels_path, V.labels_srt(cues, self._voices), encoding=self.s.encoding)
+                self.log(f"  Пометки голосов для проверки: {os.path.basename(self._voice_labels_path)}")
             if self.s.analyze_film and not notes:
                 self.progress(0.05, "Разбор фильма")
                 self.log("  Разбираю фильм: персонажи, обращения, термины…")

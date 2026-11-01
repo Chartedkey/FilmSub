@@ -14,7 +14,9 @@ from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from . import __version__
-from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models
+from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models, openrouter_model_info
+from .gui_review import ReviewWindow
+from .review import ReviewError, estimate, run_review, variant_choices
 from .config import Settings, load_settings, save_settings
 from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
@@ -84,6 +86,7 @@ class App(tk.Tk):
         st.configure("Big.TButton", font=(default[0] if default else "TkDefaultFont", 11, "bold"),
                      padding=(16, 6))
         st.configure("Hint.TLabel", foreground="#666")
+        st.configure("Accent.TButton", font=(default[0] if default else "TkDefaultFont", 10, "bold"))
         st.configure("Cost.TLabel", font=(default[0] if default else "TkDefaultFont", 10, "bold"))
 
     def _build_main(self):
@@ -121,6 +124,8 @@ class App(tk.Tk):
         self.cmp_btn.pack(side="left")
         self.film_btn = ttk.Button(sel, text="Указать фильм…", command=self.choose_film)
         self.film_btn.pack(side="left", padx=6)
+        self.rev_btn = ttk.Button(sel, text="Оценить перевод…", command=self.start_review)
+        self.rev_btn.pack(side="left")
 
         run = ttk.Frame(f)
         run.pack(fill="x")
@@ -300,8 +305,26 @@ class App(tk.Tk):
             ttk.Label(parent, text=hint, style="Hint.TLabel").grid(row=r, column=2, sticky="w", padx=8)
 
     def _build_settings(self):
-        f = self.tab_set
-        f.columnconfigure(1, weight=1)
+        # вкладка настроек прокручивается — пунктов стало много
+        canvas = tk.Canvas(self.tab_set, highlightthickness=0, borderwidth=0)
+        vsb = ttk.Scrollbar(self.tab_set, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=vsb.set)
+        vsb.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        f = ttk.Frame(canvas)
+        win = canvas.create_window((0, 0), window=f, anchor="nw")
+        f.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfigure(win, width=e.width))
+
+        def wheel(e):
+            if self.nb.select() == str(self.tab_set):
+                canvas.yview_scroll(int(-e.delta / 120) if e.delta else 0, "units")
+        self.bind_all("<MouseWheel>", wheel, add="+")
+        try:
+            canvas.configure(background=ttk.Style().lookup("TFrame", "background") or None)
+        except tk.TclError:
+            pass
+        f.columnconfigure(0, weight=1)
 
         # --- Сервис ---
         g = ttk.LabelFrame(f, text="Сервис перевода", padding=10)
@@ -386,8 +409,8 @@ class App(tk.Tk):
         ttk.Checkbutton(g2, text="Пополнять и использовать словарь (только для нового промпта)",
                         variable=self.v_glossary).grid(row=4, column=0, columnspan=2, sticky="w")
         self.v_voices = tk.BooleanVar()
-        ttk.Checkbutton(g2, text="Определять пол говорящего по голосу (нужен сам фильм; только для нового "
-                                 "промпта)", variable=self.v_voices).grid(row=5, column=0, columnspan=2,
+        ttk.Checkbutton(g2, text="Определять пол говорящего по голосу — экспериментально (нужен сам фильм; "
+                                 "только для нового промпта)", variable=self.v_voices).grid(row=5, column=0, columnspan=2,
                                                                          sticky="w")
         self.v_voicelab = tk.BooleanVar()
         ttk.Checkbutton(g2, text="Сохранять пометки голосов в Фильм.voices.srt — чтобы проверить в плеере",
@@ -428,6 +451,36 @@ class App(tk.Tk):
                         variable=self.v_syncafter).grid(row=4, column=0, columnspan=4, sticky="w",
                                                          pady=(8, 0))
 
+        # --- Проверка перевода ---
+        g5 = ttk.LabelFrame(f, text="Проверка перевода (кнопка «Оценить перевод…»)", padding=10)
+        g5.grid(row=4, column=0, sticky="we", pady=(10, 0))
+        g5.columnconfigure(1, weight=1)
+        rk = ttk.Frame(g5)
+        self.v_rkey = tk.StringVar()
+        self.rkey_entry = ttk.Entry(rk, textvariable=self.v_rkey, show="•", width=50)
+        self.rkey_entry.pack(side="left", fill="x", expand=True)
+        self.v_rshow = tk.BooleanVar()
+        ttk.Checkbutton(rk, text="показать", variable=self.v_rshow,
+                        command=lambda: self.rkey_entry.configure(show="" if self.v_rshow.get() else "•")
+                        ).pack(side="left", padx=6)
+        self._row(g5, 0, "Ключ OpenRouter:", rk)
+        rm = ttk.Frame(g5)
+        self.v_rmodel = tk.StringVar()
+        self.rmodel_cb = ttk.Combobox(rm, textvariable=self.v_rmodel, width=48)
+        self.rmodel_cb.pack(side="left", fill="x", expand=True)
+        self.rmodel_cb.bind("<KeyRelease>", self._filter_rmodels)
+        self.rmodel_cb.bind("<<ComboboxSelected>>", lambda e: self._show_rprice())
+        self.rmodels_btn = ttk.Button(rm, text="Список моделей", command=self.load_review_models)
+        self.rmodels_btn.pack(side="left", padx=6)
+        self._row(g5, 1, "Модель-редактор:", rm)
+        self.rprice_lbl = ttk.Label(g5, text="", style="Hint.TLabel")
+        self.rprice_lbl.grid(row=2, column=1, sticky="w")
+        ttk.Label(g5, text="Проверяет готовый перевод и предлагает исправления. Лучше взять сильную модель "
+                           "другого производителя, чем модель перевода (например, Claude, GPT или Gemini) — "
+                           "своих ошибок модель часто не замечает.", style="Hint.TLabel", wraplength=760,
+                  justify="left").grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        self.review_info: dict = {}
+
         # --- Обновления ---
         g4 = ttk.LabelFrame(f, text="Обновления", padding=10)
         g4.grid(row=5, column=0, sticky="we", pady=(10, 0))
@@ -466,11 +519,17 @@ class App(tk.Tk):
         self.v_syncafter.set(s.sync_after)
         self.v_voices.set(s.detect_voices)
         self.v_voicelab.set(s.save_voice_labels)
+        self.v_rkey.set(s.keys.get("OpenRouter", ""))
+        self.v_rmodel.set(s.review_model)
 
     def _provider_changed(self, load=False):
         if not load:
             self._store_provider_fields()
         p = self.v_provider.get()
+        if not load and hasattr(self, "v_rkey") and p == "OpenRouter" and self.v_rkey.get().strip():
+            self.s.keys["OpenRouter"] = self.v_rkey.get().strip()   # последнее введённое — в поле проверки
+        if not load and hasattr(self, "v_rkey") and self.s.provider == "OpenRouter":
+            self.v_rkey.set(self.s.keys.get("OpenRouter", ""))
         self.s.provider = p
         self.v_key.set(self.s.keys.get(p, ""))
         self.v_model.set(self.s.models.get(p, PROVIDERS[p]["models"][0]))
@@ -516,6 +575,12 @@ class App(tk.Tk):
         s.sync_after = self.v_syncafter.get()
         s.detect_voices = self.v_voices.get()
         s.save_voice_labels = self.v_voicelab.get()
+        # ключ OpenRouter один: при сервисе OpenRouter главное поле, иначе поле проверки
+        if s.provider == "OpenRouter":
+            self.v_rkey.set(s.keys.get("OpenRouter", ""))
+        else:
+            s.keys["OpenRouter"] = self.v_rkey.get().strip()
+        s.review_model = self.v_rmodel.get().strip()
         try:
             save_settings(s)
         except OSError as e:
@@ -537,6 +602,33 @@ class App(tk.Tk):
         text = self.v_model.get().strip().lower()
         vals = [m for m in self.all_models if text in m.lower()] if text else self.all_models
         self.model_cb.configure(values=vals[:300])
+
+    def load_review_models(self):
+        self.rmodels_btn.configure(state="disabled")
+
+        def job():
+            try:
+                self.q.put(("rmodels", openrouter_model_info()))
+            except Exception as e:  # noqa: BLE001
+                self.q.put(("rmodels_err", str(e)))
+        threading.Thread(target=job, daemon=True).start()
+
+    def _filter_rmodels(self, _event=None):
+        if not self.review_info:
+            return
+        text = self.v_rmodel.get().strip().lower()
+        ids = sorted(self.review_info)
+        self.rmodel_cb.configure(values=[m for m in ids if text in m.lower()] if text else ids)
+        self._show_rprice()
+
+    def _show_rprice(self):
+        info = self.review_info.get(self.v_rmodel.get().strip())
+        if not info or info.get("prompt") is None:
+            self.rprice_lbl.configure(text="")
+            return
+        pin, pout = info["prompt"] * 1e6, (info.get("completion") or 0) * 1e6
+        self.rprice_lbl.configure(text=f"{info['name']}: ${pin:.2f} за 1 млн токенов на входе, "
+                                       f"${pout:.2f} на выходе (фильм ≈ 0,15–0,25 млн на входе)")
 
     def load_models(self):
         self.models_btn.configure(state="disabled")
@@ -652,7 +744,7 @@ class App(tk.Tk):
     # ------------------------------------------------------------- запуск
     def _launch(self, target, *args):
         self.stop_event.clear()
-        for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn):
+        for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn, self.rev_btn):
             b.configure(state="disabled")
         self.stop_btn.configure(state="normal")
         self.pb["value"] = 0
@@ -698,6 +790,101 @@ class App(tk.Tk):
                            f"(обычно это 1–3 цента). Результат откроется в браузере.\n\nПродолжить?"):
             return
         self._launch(self._run_compare, jobs[0], s)
+
+    def start_review(self):
+        if self.worker:
+            return
+        jobs = self._selected_jobs()
+        if len(jobs) != 1:
+            messagebox.showinfo("FilmSub", "Выберите в списке один фильм (или его английские субтитры), "
+                                           "перевод которого нужно проверить.")
+            return
+        s = self.collect_settings()
+        if not s.keys.get("OpenRouter") or not s.review_model:
+            messagebox.showinfo("FilmSub", "Для проверки нужен ключ OpenRouter и модель-редактор: "
+                                           "Настройки → «Проверка перевода».")
+            self.nb.select(self.tab_set)
+            return
+        iid, path = jobs[0]
+        files = variant_choices(path)
+        if not files:
+            messagebox.showinfo("FilmSub", "У этого фильма ещё нет русских субтитров — сначала переведите его.")
+            return
+        ru = files[0] if len(files) == 1 else self._choose_variant(files)
+        if not ru:
+            return
+        self._launch(self._run_review, iid, path, ru, s)
+
+    def _choose_variant(self, files: list[str]) -> str | None:
+        dlg = tk.Toplevel(self)
+        dlg.title("Какой перевод проверить?")
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        frm = ttk.Frame(dlg, padding=16)
+        frm.pack(fill="both")
+        ttk.Label(frm, text="У фильма несколько вариантов перевода. Какой проверить?").pack(anchor="w")
+        v = tk.StringVar(value=max(files, key=os.path.getmtime))
+        for p in files:
+            stamp = time.strftime("%d.%m %H:%M", time.localtime(os.path.getmtime(p)))
+            ttk.Radiobutton(frm, text=f"{os.path.basename(p)}   ({stamp})", value=p, variable=v).pack(
+                anchor="w", pady=2)
+        res = {"p": None}
+
+        def ok():
+            res["p"] = v.get()
+            dlg.destroy()
+        b = ttk.Frame(frm)
+        b.pack(fill="x", pady=(12, 0))
+        ttk.Button(b, text="Проверить", command=ok).pack(side="left")
+        ttk.Button(b, text="Отмена", command=dlg.destroy).pack(side="left", padx=6)
+        dlg.grab_set()
+        self.wait_window(dlg)
+        return res["p"]
+
+    def _run_review(self, iid, path, ru_path, s: Settings):
+        log = lambda t: self.q.put(("log", t))  # noqa: E731
+        self.q.put(("status", iid, "проверка…", None))
+        try:
+            # примерная стоимость — до начала, чтобы не было сюрпризов
+            from .srt import read_srt
+            from .translator import load_source
+            src = load_source(path, s, lambda t: None)
+            ru = read_srt(ru_path)
+            info = self.review_info.get(s.review_model)
+            if info is None:
+                try:
+                    info = openrouter_model_info().get(s.review_model)
+                except Exception:  # noqa: BLE001
+                    info = None
+            if src and ru:
+                tin, tout, cost = estimate(src.cues, ru, info)
+                price = f"примерно ${cost:.2f}" if cost is not None else "стоимость неизвестна"
+                if not self._ask_main(f"Проверить {os.path.basename(ru_path)} моделью {s.review_model}?\n\n"
+                                      f"Реплик: {len(ru)}. Это {price} (≈{tin // 1000} тыс. токенов на входе, "
+                                      f"≈{tout // 1000} тыс. на выходе) плюс 1–2 цента за справку о фильме "
+                                      "моделью перевода.\n\nСам перевод не изменится."):
+                    self.q.put(("status", iid, "проверка отменена", None))
+                    self.q.put(("finished", None))
+                    return
+            res = run_review(path, ru_path, s, log,
+                             lambda f, t="": self.q.put(("progress", f, t)), self.stop_event.is_set)
+        except (ReviewError, ApiError) as e:
+            log(f"  ✖ {e}")
+            self.q.put(("status", iid, "проверка не удалась", "error"))
+            self.q.put(("finished", None))
+            return
+        except Exception as e:  # noqa: BLE001
+            log(f"  ✖ Непредвиденная ошибка: {e!r}")
+            self.q.put(("status", iid, "проверка не удалась", "error"))
+            self.q.put(("finished", None))
+            return
+        if res:
+            label = f"оценка {res.score}/10" if res.score is not None else "проверено"
+            self.q.put(("status", iid, f"{label} · замечаний {len(res.issues)}", "done"))
+            self.q.put(("review", res))
+        else:
+            self.q.put(("status", iid, "проверка остановлена", None))
+        self.q.put(("finished", res.cost if res and res.cost is not None else None))
 
     # ---------------------------------------------------------- обновления
     def check_updates(self, manual: bool):
@@ -1075,7 +1262,7 @@ class App(tk.Tk):
                     self.cost_lbl.configure(text=f"Потрачено: {approx}${msg[1]:.3f}")
                 elif kind == "finished":
                     self.worker = None
-                    for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn):
+                    for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn, self.rev_btn):
                         b.configure(state="normal")
                     self.stop_btn.configure(state="disabled")
                     stopped = self.stop_event.is_set()
@@ -1116,6 +1303,18 @@ class App(tk.Tk):
                     self.model_cb.configure(values=msg[1])
                     self.log(f"Загружено моделей OpenRouter: {len(msg[1])}. Введите часть названия "
                              "(например «deepseek» или «claude») и раскройте список.")
+                elif kind == "rmodels":
+                    self.rmodels_btn.configure(state="normal")
+                    self.review_info = msg[1]
+                    self.rmodel_cb.configure(values=sorted(msg[1]))
+                    self._show_rprice()
+                    self.log(f"Загружено моделей OpenRouter: {len(msg[1])}. Введите часть названия "
+                             "(например «claude», «gpt» или «gemini») и раскройте список.")
+                elif kind == "rmodels_err":
+                    self.rmodels_btn.configure(state="normal")
+                    self.log(f"Не удалось загрузить список моделей: {msg[1]}")
+                elif kind == "review":
+                    ReviewWindow(self, msg[1], self.s.encoding, log=self.log)
                 elif kind == "models_err":
                     self.models_btn.configure(state="normal")
                     self.log(f"Не удалось загрузить список моделей: {msg[1]}")

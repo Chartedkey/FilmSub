@@ -38,7 +38,9 @@ class Settings:
     overwrite: bool = False        # устарело: заменено existing_mode
     existing_mode: str = "ask"     # если перевод уже есть: ask / overwrite / alt / skip
     check_updates: bool = True     # проверять обновления при запуске
-    detect_voices: bool = True     # определять пол говорящего по голосу (новый стиль, нужен фильм)
+    detect_voices: bool = False    # экспериментально: пол говорящего по голосу (новый стиль, нужен фильм)
+    settings_rev: int = 130        # версия формата настроек (для разовых изменений при обновлении)
+    review_model: str = ""         # модель OpenRouter для «Оценить перевод»
     save_voice_labels: bool = False  # сохранять Фильм.voices.srt с пометками [м]/[ж] для проверки
     video_map: dict = field(default_factory=dict)  # субтитры → фильм, указанный вручную
     skip_if_russian: bool = True
@@ -70,7 +72,11 @@ def load_settings() -> Settings:
                 else:
                     setattr(s, k, v)
     except (OSError, ValueError):
-        pass
+        return s
+    if int(data.get("settings_rev", 0) or 0) < 130:
+        # 1.3.0: определение голосов стало экспериментальным и по умолчанию выключено
+        s.detect_voices = False
+        s.settings_rev = 130
     return s
 
 

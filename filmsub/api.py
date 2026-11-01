@@ -100,7 +100,8 @@ class ChatClient:
             raise ApiError("Сервер вернул непонятный ответ")
 
     def chat(self, system: str, user: str, max_tokens: int = 8000,
-             temperature: float = 0.6, json_mode: bool = True) -> tuple[str, Usage]:
+             temperature: float = 0.6, json_mode: bool = True,
+             reasoning: bool | None = False) -> tuple[str, Usage]:
         payload: dict = {
             "model": self.model,
             "messages": [
@@ -116,7 +117,8 @@ class ChatClient:
             # Режим «размышлений» для перевода не нужен — только тратит токены
             payload["thinking"] = {"type": "disabled"}
         else:
-            payload["reasoning"] = {"enabled": False}
+            if reasoning is not None:      # None — оставить модели её обычный режим
+                payload["reasoning"] = {"enabled": reasoning}
             payload["usage"] = {"include": True}
 
         data = self._post("/chat/completions", payload)
@@ -165,6 +167,27 @@ class ChatClient:
                 time.sleep(delay)
                 delay = min(delay * 2, 60)
         raise last if last else ApiError("Неизвестная ошибка")
+
+
+def openrouter_model_info(timeout: int = 30) -> dict[str, dict]:
+    """id модели → {"name", "prompt" и "completion" (цена за токен, $), "context"}."""
+    req = urllib.request.Request("https://openrouter.ai/api/v1/models")
+    with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    info = {}
+    for m in data.get("data", []):
+        if "id" not in m:
+            continue
+        pr = m.get("pricing") or {}
+
+        def num(v):
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+        info[m["id"]] = {"name": m.get("name") or m["id"], "prompt": num(pr.get("prompt")),
+                         "completion": num(pr.get("completion")), "context": m.get("context_length")}
+    return info
 
 
 def list_openrouter_models(timeout: int = 30) -> list[str]:
