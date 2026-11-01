@@ -34,8 +34,18 @@ jobs:
             echo "new=true" >> "$GITHUB_OUTPUT"; echo "Новая версия $VER — будет опубликован релиз"
           fi
 
-      - name: Установить PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
+      # Загрузчик PyInstaller собирается из исходников прямо здесь: готовый загрузчик из PyPI
+      # одинаков у тысяч программ (в том числе вредоносных), и антивирусы реагируют на него.
+      - name: Установить PyInstaller (со сборкой загрузчика) и numpy
+        env:
+          PYINSTALLER_COMPILE_BOOTLOADER: "1"
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install --no-binary pyinstaller --no-cache-dir pyinstaller
+          python -m pip install numpy
+
+      - name: Сведения о версии для exe
+        run: python tools/make_version_info.py version_info.txt
 
       - name: Проверить, что код компилируется
         run: python -m compileall -q filmsub FilmSub.pyw
@@ -43,7 +53,15 @@ jobs:
       - name: Собрать FilmSub.exe
         run: >
           pyinstaller --noconfirm --clean --onefile --windowed --name FilmSub
-          --icon filmsub.ico --add-data "filmsub.ico;." --add-data "filmsub/data;filmsub/data" FilmSub.pyw
+          --icon filmsub.ico --version-file version_info.txt
+          --add-data "filmsub.ico;." --add-data "filmsub/data;filmsub/data"
+          --hidden-import numpy --exclude-module numpy.tests FilmSub.pyw
+
+      - name: Проверить сборку
+        shell: bash
+        run: |
+          ls -la dist
+          sha256sum dist/FilmSub.exe | tee dist/FilmSub.exe.sha256
 
       - name: Сохранить сборку
         uses: actions/upload-artifact@v4
@@ -58,5 +76,7 @@ jobs:
           tag_name: v${{ steps.ver.outputs.version }}
           target_commitish: ${{ github.sha }}
           name: FilmSub ${{ steps.ver.outputs.version }}
-          files: dist/FilmSub.exe
+          files: |
+            dist/FilmSub.exe
+            dist/FilmSub.exe.sha256
           generate_release_notes: true

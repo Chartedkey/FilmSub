@@ -240,6 +240,17 @@ NEW_STYLE_RULES = """Сленг, идиомы и реалии:
 - Не меняй «ты»/«вы» между персонажами внутри одной сцены без явной причины (знакомство, ссора, сближение). \
 Смотри, как они обращались друг к другу в блоке "before".
 - Следи за единообразием: одна и та же реалия в фильме переводится одинаково.
+- Если у реплики есть поле "voice" — это пол голоса, определённый по звуку фильма: «м» — мужской, \
+«ж» — женский; для реплики-диалога — по строкам («м, ж»; «?» — не определён). Используй его для рода \
+говорящего («я пришёл»/«я пришла»). Пометка обычно верна, но может ошибаться на шуме и музыке — \
+если она явно противоречит сюжету, доверяй сюжету.
+
+Игра слов:
+- Если реплики обыгрывают написание или звучание слова (опечатка, перепутанные буквы, оговорка, рифма, \
+каламбур), не переводи слово «правильно» — придумай русский аналог с той же шуткой: например, если \
+в записке «gub» вместо «gun», пусть будет «пистолед» вместо «пистолет». Выбранный вариант \
+выдерживай одинаково во всех репликах сцены; если шутка уже переведена в блоке "before", \
+продолжай тот же вариант.
 
 Примеры из других фильмов — как не надо и как надо:
 - "Break a leg!" — не «Сломай ногу!», а «Ни пуха ни пера!»
@@ -416,7 +427,9 @@ class FileTranslator:
     def _save_cache(self, path, notes, cues, entries=None):
         with self._lock:
             data = {"notes": notes, "ru": {str(i): c.ru for i, c in enumerate(cues) if c.ru},
-                    "entries": [[e.en, e.ru, e.note] for e in (entries or [])]}
+                    "entries": [[e.en, e.ru, e.note] for e in (entries or [])],
+                    "voices": getattr(self, "_voices", None),
+                    "timing": getattr(self, "_timing", None)}
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False)
@@ -502,6 +515,53 @@ class FileTranslator:
             pass
         return cues, notes
 
+    def _item(self, cues: list[Cue], i: int) -> dict:
+        item = {"id": i + 1, "en": cues[i].text}
+        voices = getattr(self, "_voices", None)
+        if voices and self.style == "new" and i < len(voices) and voices[i]:
+            item["voice"] = voices[i]
+        return item
+
+    def _prepare_voices(self, video: str, cues: list[Cue]) -> None:
+        """Подгоняет тайминги под звук и определяет пол голоса по каждой реплике."""
+        from . import voices as V
+        from .sync import SyncError, find_tools, sync_cues
+        tools = find_tools()
+        if not tools:
+            self.log("  Определение голосов пропущено: нет ffmpeg (скачается при первой синхронизации)")
+            return
+        self.log(f"  Слушаю голоса в фильме {os.path.basename(video)}…")
+        self.progress(0.03, "Проверка синхронизации")
+        orig = [(c.start_ms, c.end_ms) for c in cues]
+        try:
+            rep = sync_cues(video, cues, self.log, stop_flag=self.stop_flag)
+        except SyncError as e:
+            if self.stop_flag():
+                raise Stopped()
+            self.log(f"  ⚠ Синхронизация не удалась ({e}) — голоса не определяю, переведу без них")
+            return
+        if rep.status == "rejected":
+            self.log("  ⚠ Субтитры, похоже, от другой версии фильма — голоса не определяю")
+            return
+        try:
+            self._voices = V.detect(video, cues, tools[1], log=self.log, stop_flag=self.stop_flag,
+                                    progress=lambda f: self.progress(0.03 + 0.04 * f, "Голоса"))
+        except V.VoiceError as e:
+            if self.stop_flag():
+                raise Stopped()
+            self.log(f"  ⚠ Не удалось определить голоса: {e}")
+        except ImportError:
+            self.log("  ⚠ Не найден модуль numpy — голоса не определяю")
+        finally:
+            moved = any((c.start_ms, c.end_ms) != o for c, o in zip(cues, orig))
+            if moved and self.s.sync_after:
+                # тайминги, подогнанные под звук, пойдут и в русский файл
+                self._timing = [[c.start_ms, c.end_ms] for c in cues]
+            elif moved:
+                for c, (a, b) in zip(cues, orig):
+                    c.start_ms, c.end_ms = a, b
+                self.log("  (в русском файле останутся исходные тайминги — подгонка нужна была только для голосов)")
+
     def _translate_batch(self, system: str, cues: list[Cue], idxs: list[int]) -> None:
         """Переводит реплики с номерами idxs (подряд идущие). При сбоях делит пачку пополам."""
         self._check_stop()
@@ -515,7 +575,7 @@ class FileTranslator:
         after = [{"en": cues[j].text} for j in range(last + 1, min(len(cues), last + 5))]
         payload = {
             "before": before,
-            "translate": [{"id": i + 1, "en": cues[i].text} for i in idxs],
+            "translate": [self._item(cues, i) for i in idxs],
             "after": after,
         }
         g = getattr(self, "_glossary", None)
@@ -585,7 +645,7 @@ class FileTranslator:
                 else:
                     self._translate_batch(system, cues, g)
 
-    def translate(self, path: str, existing: str | None = None) -> dict:
+    def translate(self, path: str, existing: str | None = None, video: str | None = None) -> dict:
         """existing — что делать, если перевод уже есть: overwrite (с копией старого), alt (сохранить
         вторым вариантом Фильм.ru.v2.srt) или skip. По умолчанию — из настроек."""
         self.log(f"▶ {os.path.basename(path)}")
@@ -601,6 +661,7 @@ class FileTranslator:
             if mode == "alt":
                 target = alt_output_path(path)
 
+        self._voices = self._timing = None
         src = load_source(path, self.s, self.log,
                           progress=lambda f: self.progress(f * 0.05, "Чтение MKV"))
         if not src:
@@ -620,6 +681,11 @@ class FileTranslator:
                     data = json.load(f)
                 notes = data.get("notes", "")
                 entries = [Entry(en=a, ru=b, note=c) for a, b, c in data.get("entries", [])]
+                self._voices = data.get("voices")
+                self._timing = data.get("timing")
+                if self._timing and len(self._timing) == len(cues):
+                    for c, (a, b) in zip(cues, self._timing):
+                        c.start_ms, c.end_ms = a, b
                 for k, v in data.get("ru", {}).items():
                     if int(k) < len(cues):
                         cues[int(k)].ru = v
@@ -629,6 +695,10 @@ class FileTranslator:
                 pass
 
         try:
+            if (video and self.style == "new" and getattr(self.s, "detect_voices", True)
+                    and not getattr(self, "_voices", None)):
+                self._prepare_voices(video, cues)
+                self._save_cache(cache, notes, cues, entries)
             if self.s.analyze_film and not notes:
                 self.progress(0.05, "Разбор фильма")
                 self.log("  Разбираю фильм: персонажи, обращения, термины…")

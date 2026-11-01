@@ -8,7 +8,8 @@ import re
 import ssl
 import subprocess
 import sys
-import tempfile
+import threading
+import time
 import urllib.request
 from dataclasses import dataclass
 
@@ -95,18 +96,62 @@ def download(rel: Release, progress=None) -> str:
 
 
 def apply_and_restart(new_exe: str) -> None:
-    """Запускает маленький bat-файл: он ждёт закрытия программы, подменяет exe и запускает новую версию."""
+    """Подменяет exe без вспомогательных скриптов и запускает новую версию.
+
+    Windows не даёт удалить запущенный exe, но разрешает его переименовать: текущий файл
+    становится FilmSub.old.exe, на его место встаёт скачанный, и новая версия запускается.
+    Старый файл удаляет уже новая версия при запуске (cleanup_old)."""
     exe = sys.executable
-    pid = os.getpid()
-    bat = os.path.join(tempfile.gettempdir(), "filmsub_update.bat")
-    with open(bat, "w", encoding="cp866", errors="replace") as f:
-        f.write(f"""@echo off
-:wait
-timeout /t 1 /nobreak >nul
-tasklist /fi "PID eq {pid}" 2>nul | find "{pid}" >nul && goto wait
-move /y "{new_exe}" "{exe}" >nul
-start "" "{exe}"
-del "%~f0"
-""")
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "DETACHED_PROCESS", 0)
-    subprocess.Popen(["cmd", "/c", bat], creationflags=flags, close_fds=True)
+    folder = os.path.dirname(exe)
+    old = os.path.join(folder, "FilmSub.old.exe")
+    try:
+        if os.path.exists(old):
+            os.remove(old)
+    except OSError:
+        old = os.path.join(folder, f"FilmSub.old.{os.getpid()}.exe")
+    try:
+        os.replace(exe, old)
+    except OSError as e:
+        raise UpdateError(f"Не удалось заменить программу: {e}")
+    try:
+        os.replace(new_exe, exe)
+    except OSError as e:
+        try:
+            os.replace(old, exe)       # откат
+        except OSError:
+            pass
+        raise UpdateError(f"Не удалось установить обновление: {e}")
+    env = dict(os.environ)
+    # новый процесс должен распаковаться заново, а не использовать папку текущего
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    for k in [k for k in env if k.startswith("_PYI") or k == "_MEIPASS2"]:
+        env.pop(k, None)
+    flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    subprocess.Popen([exe], cwd=folder, env=env, creationflags=flags, close_fds=True)
+
+
+def cleanup_old() -> None:
+    """Удаляет остатки прошлого обновления. Старая версия может ещё закрываться — пробуем несколько раз."""
+    if not can_self_update():
+        return
+    folder = os.path.dirname(sys.executable)
+
+    def job():
+        for _ in range(20):
+            left = 0
+            try:
+                names = os.listdir(folder)
+            except OSError:
+                return
+            for n in names:
+                low = n.lower()
+                if (low.startswith("filmsub.old") and low.endswith(".exe")) or low == "filmsub.new.exe":
+                    try:
+                        os.remove(os.path.join(folder, n))
+                    except OSError:
+                        left += 1
+            if not left:
+                return
+            time.sleep(1.5)
+
+    threading.Thread(target=job, daemon=True).start()

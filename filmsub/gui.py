@@ -20,7 +20,7 @@ from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
 from .sync import SyncError, download_tools, find_tools, find_video_for, sync_subtitles
 from .translator import FileTranslator, collect_inputs, output_path_for
-from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest,
+from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest, cleanup_old,
                       download, is_newer)
 
 KEY_URLS = {
@@ -45,11 +45,8 @@ class App(tk.Tk):
         self.items: dict[str, str] = {}   # iid -> путь
 
         self._style()
-        try:
-            base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            self.iconbitmap(os.path.join(base, "filmsub.ico"))
-        except tk.TclError:
-            pass
+        self._set_icon()
+        cleanup_old()
         nb = ttk.Notebook(self)
         nb.pack(fill="both", expand=True, padx=10, pady=10)
         self.tab_main = ttk.Frame(nb, padding=10)
@@ -386,12 +383,16 @@ class App(tk.Tk):
         self.v_glossary = tk.BooleanVar()
         ttk.Checkbutton(g2, text="Пополнять и использовать словарь (только для нового промпта)",
                         variable=self.v_glossary).grid(row=4, column=0, columnspan=2, sticky="w")
+        self.v_voices = tk.BooleanVar()
+        ttk.Checkbutton(g2, text="Определять пол говорящего по голосу (нужен сам фильм; только для нового "
+                                 "промпта)", variable=self.v_voices).grid(row=5, column=0, columnspan=2,
+                                                                         sticky="w")
         cs = ttk.Frame(g2)
         ttk.Label(cs, text="Реплик для сравнения стилей:").pack(side="left")
         self.v_cmpsize = tk.StringVar()
         ttk.Spinbox(cs, from_=30, to=600, increment=30, textvariable=self.v_cmpsize, width=6).pack(
             side="left", padx=6)
-        cs.grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        cs.grid(row=6, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
         # --- Файлы и скорость ---
         g3 = ttk.LabelFrame(f, text="Файлы и скорость", padding=10)
@@ -458,6 +459,7 @@ class App(tk.Tk):
         self.v_glossary.set(s.use_glossary)
         self.v_cmpsize.set(str(s.compare_size))
         self.v_syncafter.set(s.sync_after)
+        self.v_voices.set(s.detect_voices)
 
     def _provider_changed(self, load=False):
         if not load:
@@ -506,6 +508,7 @@ class App(tk.Tk):
         s.use_glossary = self.v_glossary.get()
         s.compare_size = max(30, min(600, self._num(self.v_cmpsize, 150, int)))
         s.sync_after = self.v_syncafter.get()
+        s.detect_voices = self.v_voices.get()
         try:
             save_settings(s)
         except OSError as e:
@@ -617,6 +620,28 @@ class App(tk.Tk):
         self.logbox.see("end")
         self.logbox.configure(state="disabled")
 
+    def _set_icon(self):
+        """Набор картинок разных размеров: Windows сама берёт подходящую для заголовка и панели задач.
+        Для 16–48 px — упрощённый рисунок, крупнее — полный."""
+        here = os.path.dirname(os.path.abspath(__file__))
+        folder = os.path.join(here, "data", "icons")
+        self._icons = []
+        try:
+            for n in (256, 64, 48, 32, 24, 16):
+                f = os.path.join(folder, f"icon{n}.png")
+                if os.path.exists(f):
+                    self._icons.append(tk.PhotoImage(file=f))
+            if self._icons:
+                self.iconphoto(True, *self._icons)
+                return
+        except tk.TclError:
+            pass
+        try:
+            base = getattr(sys, "_MEIPASS", os.path.dirname(here))
+            self.iconbitmap(os.path.join(base, "filmsub.ico"))
+        except tk.TclError:
+            pass
+
     # ------------------------------------------------------------- запуск
     def _launch(self, target, *args):
         self.stop_event.clear()
@@ -724,13 +749,73 @@ class App(tk.Tk):
             self.q.put(("log", f"  ✖ {e}"))
             return False
 
+    def _video_for(self, path: str, s: Settings) -> str | None:
+        """Фильм для файла: сам файл, фильм с тем же именем рядом или указанный раньше вручную."""
+        v = find_video_for(path)
+        if v:
+            return v
+        v = s.video_map.get(os.path.normcase(os.path.abspath(path)))
+        return v if v and os.path.exists(v) else None
+
+    def ask_videos(self, paths: list[str], s: Settings) -> bool:
+        """Для субтитров без фильма рядом предлагает указать файл фильма. False — отмена."""
+        for k, p in enumerate(paths):
+            left = len(paths) - k
+            dlg = tk.Toplevel(self)
+            dlg.title("Определение голосов")
+            dlg.transient(self)
+            dlg.resizable(False, False)
+            frm = ttk.Frame(dlg, padding=16)
+            frm.pack(fill="both")
+            ttk.Label(frm, text=f"Для определения голосов укажите файл фильма для субтитров\n\n"
+                                f"{os.path.basename(p)}\n\nРядом с ними фильм с таким же именем не найден. "
+                                "Программа запомнит выбор.", justify="left", wraplength=460).pack(anchor="w")
+            result = {"v": "none"}
+
+            def choose(v, dlg=dlg):
+                result["v"] = v
+                dlg.destroy()
+
+            def pick(p=p, dlg=dlg):
+                f = filedialog.askopenfilename(
+                    parent=dlg, title="Файл фильма", initialdir=os.path.dirname(p),
+                    filetypes=[("Видео", "*.mkv *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"),
+                               ("Все файлы", "*.*")])
+                if f:
+                    choose(f)
+
+            b = ttk.Frame(frm)
+            b.pack(fill="x", pady=(14, 0))
+            ttk.Button(b, text="Выбрать фильм…", command=pick).pack(fill="x")
+            ttk.Button(b, text="Без фильма — переводить без определения голосов",
+                       command=lambda: choose("none")).pack(fill="x", pady=(6, 0))
+            if left > 1:
+                ttk.Button(b, text=f"Без фильма для всех оставшихся ({left})",
+                           command=lambda: choose("all")).pack(fill="x", pady=(6, 0))
+            ttk.Button(b, text="Отмена", command=lambda: choose(None)).pack(fill="x", pady=(10, 0))
+            dlg.protocol("WM_DELETE_WINDOW", lambda: choose(None))
+            dlg.grab_set()
+            self.wait_window(dlg)
+            v = result["v"]
+            if v is None:
+                return False
+            if v == "all":
+                break
+            if v != "none":
+                s.video_map[os.path.normcase(os.path.abspath(p))] = os.path.abspath(v)
+        try:
+            save_settings(s)
+        except OSError:
+            pass
+        return True
+
     def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
         """Синхронизирует .ru.srt этого фильма. Возвращает подпись для статуса."""
         out = out or output_path_for(path)
         if not os.path.exists(out):
             self.q.put(("log", f"  Нет файла {os.path.basename(out)} — сначала переведите фильм"))
             return "нет .ru.srt"
-        video = find_video_for(path)
+        video = self._video_for(path, s)
         if not video:
             self.q.put(("log", f"  Рядом с {os.path.basename(out)} нет самого фильма — синхронизировать "
                                "не с чем"))
@@ -799,6 +884,11 @@ class App(tk.Tk):
             mode = self.ask_existing(existing)
             if mode is None:
                 return
+        if s.prompt_style == "new" and s.detect_voices:
+            todo = [p for _, p in jobs if not (mode == "skip" and os.path.exists(output_path_for(p)))]
+            missing = [p for p in todo if not self._video_for(p, s)]
+            if missing and not self.ask_videos(missing, s):
+                return
         self._launch(self._run, jobs, s, mode)
 
     def ask_existing(self, paths: list[str]) -> str | None:
@@ -858,7 +948,12 @@ class App(tk.Tk):
             tr = FileTranslator(s, log=lambda t: self.q.put(("log", t)), progress=progress,
                                 stop_flag=self.stop_event.is_set, usage_cb=on_usage)
             try:
-                res = tr.translate(path, existing=mode)
+                video = None
+                if s.prompt_style == "new" and s.detect_voices:
+                    video = self._video_for(path, s)
+                    if video and not find_tools() and not self._ensure_tools():
+                        video = None
+                res = tr.translate(path, existing=mode, video=video)
             except ApiError as e:
                 self.q.put(("log", f"  ✖ {e}"))
                 self.q.put(("status", iid, "ошибка", "error"))
@@ -927,7 +1022,13 @@ class App(tk.Tk):
                         self.collect_settings()
                     except Exception:  # noqa: BLE001
                         pass
-                    apply_and_restart(msg[1])
+                    try:
+                        apply_and_restart(msg[1])
+                    except UpdateError as e:
+                        self.log(f"✖ {e}")
+                        messagebox.showwarning("FilmSub", f"{e}\n\nСкачайте новую версию вручную: {RELEASES_PAGE}")
+                        self.q.put(("finished", None))
+                        continue
                     self.destroy()
                     return
                 elif kind == "open":

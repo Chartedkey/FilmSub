@@ -139,7 +139,11 @@ def analyze_shift(old: list[Cue], new: list[Cue]) -> SyncReport:
     if abs(med) > MAX_SHIFT_S or max(abs(d) for d in deltas) > MAX_SHIFT_S * 2:
         return SyncReport("rejected", f"Найден слишком большой сдвиг ({med:+.1f} с) — похоже на ошибку, "
                                       "файл не изменён", med, segments)
-    if segments > MAX_SEGMENTS:
+    jumbled = sum(1 for a, b in zip(new, new[1:]) if b.start_ms < a.start_ms - 1000)
+    if jumbled:
+        return SyncReport("rejected", "После синхронизации реплики перепутались местами — результату нельзя "
+                                      "доверять, файл не изменён", med, segments)
+    if segments > MAX_SEGMENTS or (segments > 3 and segments > len(old) / 4):
         return SyncReport("rejected", f"Сдвиг получился «рваным» ({segments} участков) — "
                                       "результату нельзя доверять, файл не изменён", med, segments)
 
@@ -176,23 +180,19 @@ def backup(path: str) -> str:
     return dest
 
 
-def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_flag=None) -> SyncReport:
+def _run_alass(video: str, cues: list[Cue], stop_flag=None) -> list[Cue]:
+    """Прогоняет alass над копией реплик и возвращает реплики с новыми таймингами."""
     tools = find_tools()
     if not tools:
         raise SyncError("Инструменты синхронизации не установлены")
     alass, ffmpeg, ffprobe = tools
-    old = read_srt(srt_path)
-    if not old:
-        raise SyncError("Файл субтитров пустой")
-
-    log(f"  Синхронизирую {os.path.basename(srt_path)} по звуку {os.path.basename(video)}…")
     env = dict(os.environ, ALASS_FFMPEG_PATH=ffmpeg, ALASS_FFPROBE_PATH=ffprobe)
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     with tempfile.TemporaryDirectory() as tmp:
-        # alass получает копию в UTF-8 без лишнего — наш файл и формат он не трогает
+        # alass получает копию в UTF-8 — исходный файл и его формат он не трогает
         src = os.path.join(tmp, "in.srt")
         out = os.path.join(tmp, "out.srt")
-        write_srt(src, old, encoding="utf-8")
+        write_srt(src, [Cue(c.start_ms, c.end_ms, c.text, c.prefix) for c in cues], encoding="utf-8")
         cmd = [alass, video, src, out]
         logfile = open(os.path.join(tmp, "alass.log"), "w+b")  # в файл, чтобы вывод не забил канал
         try:
@@ -220,8 +220,30 @@ def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_fl
         if proc.returncode != 0 or not os.path.exists(out):
             tail = output.strip().splitlines()[-3:]
             raise SyncError("alass завершился с ошибкой: " + " / ".join(tail))
-        new = read_srt(out)
+        return read_srt(out)
 
+
+def sync_cues(video: str, cues: list[Cue], log, stop_flag=None) -> SyncReport:
+    """Подгоняет тайминги реплик в памяти (без записи файла). Подозрительный результат не применяет."""
+    new = _run_alass(video, cues, stop_flag)
+    report = analyze_shift(cues, new)
+    if report.status == "changed":
+        for o, n in zip(cues, new):
+            o.start_ms, o.end_ms = n.start_ms, n.end_ms
+        log(f"  ✔ Тайминги подогнаны под звук: {report.summary}")
+    elif report.status == "unchanged":
+        log("  ✔ Субтитры совпадают со звуком")
+    else:
+        log(f"  ⚠ {report.summary}")
+    return report
+
+
+def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_flag=None) -> SyncReport:
+    old = read_srt(srt_path)
+    if not old:
+        raise SyncError("Файл субтитров пустой")
+    log(f"  Синхронизирую {os.path.basename(srt_path)} по звуку {os.path.basename(video)}…")
+    new = _run_alass(video, old, stop_flag)
     report = analyze_shift(old, new)
     if report.status == "changed":
         saved = backup(srt_path)

@@ -5,3 +5,4 @@ dist/
 .build_venv/
 *.spec
 FilmSub.exe
+version_info.txt

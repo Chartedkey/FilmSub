@@ -36,17 +36,21 @@ echo  [1/3] Готовлю окружение для сборки...
 %PY% -m venv .build_venv || goto :fail
 call .build_venv\Scripts\activate.bat || goto :fail
 python -m pip install --upgrade pip >nul
-echo  [2/3] Устанавливаю PyInstaller...
-python -m pip install pyinstaller || goto :fail
+echo  [2/3] Устанавливаю PyInstaller и numpy...
+set "PYINSTALLER_COMPILE_BOOTLOADER=1"
+python -m pip install --no-binary pyinstaller pyinstaller || python -m pip install pyinstaller || goto :fail
+python -m pip install numpy || goto :fail
+python tools\make_version_info.py version_info.txt || goto :fail
 
 echo  [3/3] Собираю FilmSub.exe...
 pyinstaller --noconfirm --clean --onefile --windowed --name FilmSub ^
-    --icon filmsub.ico --add-data "filmsub.ico;." --add-data "filmsub/data;filmsub/data" FilmSub.pyw || goto :fail
+    --icon filmsub.ico --version-file version_info.txt --add-data "filmsub.ico;." ^
+    --add-data "filmsub/data;filmsub/data" --hidden-import numpy FilmSub.pyw || goto :fail
 
 copy /y dist\FilmSub.exe FilmSub.exe >nul || goto :fail
 call deactivate
 rmdir /s /q build dist .build_venv >nul 2>nul
-del /q FilmSub.spec >nul 2>nul
+del /q FilmSub.spec version_info.txt >nul 2>nul
 
 echo.
 echo  Готово! Рядом появился FilmSub.exe — его можно перенести куда угодно

@@ -38,6 +38,8 @@ class Settings:
     overwrite: bool = False        # устарело: заменено existing_mode
     existing_mode: str = "ask"     # если перевод уже есть: ask / overwrite / alt / skip
     check_updates: bool = True     # проверять обновления при запуске
+    detect_voices: bool = True     # определять пол говорящего по голосу (новый стиль, нужен фильм)
+    video_map: dict = field(default_factory=dict)  # субтитры → фильм, указанный вручную
     skip_if_russian: bool = True
     encoding: str = "utf-8-sig"    # utf-8-sig (UTF-8 с BOM) или cp1251
     last_dir: str = ""
