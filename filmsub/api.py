@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import ssl
 import time
@@ -92,7 +93,10 @@ class ChatClient:
             raise ApiError(f"Нет связи с сервером: {e.reason}")
         except (TimeoutError, OSError) as e:
             raise ApiError(f"Сетевая ошибка: {e}")
-        except json.JSONDecodeError:
+        except http.client.HTTPException as e:
+            # соединение оборвалось посреди ответа (IncompleteRead, RemoteDisconnected…) — повторяем
+            raise ApiError(f"Связь с сервером оборвалась ({type(e).__name__})")
+        except (json.JSONDecodeError, UnicodeDecodeError):
             raise ApiError("Сервер вернул непонятный ответ")
 
     def chat(self, system: str, user: str, max_tokens: int = 8000,
