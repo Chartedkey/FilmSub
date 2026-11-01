@@ -18,7 +18,7 @@ from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models
 from .config import Settings, load_settings, save_settings
 from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
-from .sync import SyncError, download_tools, find_tools, find_video_for, sync_subtitles
+from .sync import NoEnglishTrack, SyncError, download_tools, find_tools, find_video_for, sync_subtitles
 from .translator import FileTranslator, collect_inputs, output_path_for
 from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest, cleanup_old,
                       download, is_newer)
@@ -387,12 +387,15 @@ class App(tk.Tk):
         ttk.Checkbutton(g2, text="Определять пол говорящего по голосу (нужен сам фильм; только для нового "
                                  "промпта)", variable=self.v_voices).grid(row=5, column=0, columnspan=2,
                                                                          sticky="w")
+        self.v_voicelab = tk.BooleanVar()
+        ttk.Checkbutton(g2, text="Сохранять пометки голосов в Фильм.voices.srt — чтобы проверить в плеере",
+                        variable=self.v_voicelab).grid(row=6, column=0, columnspan=2, sticky="w", padx=(20, 0))
         cs = ttk.Frame(g2)
         ttk.Label(cs, text="Реплик для сравнения стилей:").pack(side="left")
         self.v_cmpsize = tk.StringVar()
         ttk.Spinbox(cs, from_=30, to=600, increment=30, textvariable=self.v_cmpsize, width=6).pack(
             side="left", padx=6)
-        cs.grid(row=6, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        cs.grid(row=7, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
         # --- Файлы и скорость ---
         g3 = ttk.LabelFrame(f, text="Файлы и скорость", padding=10)
@@ -460,6 +463,7 @@ class App(tk.Tk):
         self.v_cmpsize.set(str(s.compare_size))
         self.v_syncafter.set(s.sync_after)
         self.v_voices.set(s.detect_voices)
+        self.v_voicelab.set(s.save_voice_labels)
 
     def _provider_changed(self, load=False):
         if not load:
@@ -509,6 +513,7 @@ class App(tk.Tk):
         s.compare_size = max(30, min(600, self._num(self.v_cmpsize, 150, int)))
         s.sync_after = self.v_syncafter.get()
         s.detect_voices = self.v_voices.get()
+        s.save_voice_labels = self.v_voicelab.get()
         try:
             save_settings(s)
         except OSError as e:
@@ -809,6 +814,16 @@ class App(tk.Tk):
             pass
         return True
 
+    def _ask_main(self, question: str) -> bool:
+        """Вопрос «да/нет» из рабочего потока: показывается в главном окне, поток ждёт ответа."""
+        box = {"answer": False}
+        ev = threading.Event()
+        self.q.put(("ask", question, box, ev))
+        while not ev.wait(0.3):
+            if self.stop_event.is_set():
+                return False
+        return box["answer"]
+
     def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
         """Синхронизирует .ru.srt этого фильма. Возвращает подпись для статуса."""
         out = out or output_path_for(path)
@@ -822,9 +837,19 @@ class App(tk.Tk):
             return "нет фильма"
         if not self._ensure_tools():
             return "нет alass"
+        log = lambda t: self.q.put(("log", t))  # noqa: E731
         try:
-            rep = sync_subtitles(video, out, lambda t: self.q.put(("log", t)), encoding=s.encoding,
-                                 stop_flag=self.stop_event.is_set)
+            try:
+                rep = sync_subtitles(video, out, log, encoding=s.encoding, stop_flag=self.stop_event.is_set)
+            except NoEnglishTrack as e:
+                log(f"  ⚠ {str(e).capitalize()}")
+                if not self._ask_main(
+                        f"{os.path.basename(video)}: {e}.\n\nСверка по озвучке часто ошибается: "
+                        "переведённая речь звучит не там, где английская. Всё равно синхронизировать?\n\n"
+                        "(Копия субтитров сохранится, файл можно будет вернуть.)"):
+                    return "нет англ. дорожки"
+                rep = sync_subtitles(video, out, log, encoding=s.encoding, stop_flag=self.stop_event.is_set,
+                                     allow_other_lang=True)
         except SyncError as e:
             self.q.put(("log", f"  ✖ {e}"))
             return "ошибка синхр."
@@ -1015,6 +1040,9 @@ class App(tk.Tk):
                     self.bell()
                     if self.nb.select() == str(self.tab_glo):
                         self.refresh_glossary()
+                elif kind == "ask":
+                    msg[2]["answer"] = messagebox.askyesno("FilmSub", msg[1])
+                    msg[3].set()
                 elif kind == "update":
                     self._on_update_info(msg[1], msg[2], msg[3])
                 elif kind == "restart":

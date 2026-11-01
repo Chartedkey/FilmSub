@@ -10,6 +10,7 @@ FilmSub проверяет результат: показывает найден
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import statistics
@@ -34,6 +35,19 @@ MAX_SEGMENTS = 20          # слишком много отдельных кус
 
 class SyncError(Exception):
     pass
+
+
+class NoEnglishTrack(SyncError):
+    """В фильме нет английской звуковой дорожки (например, только русская озвучка)."""
+
+    def __init__(self, langs: list[str]):
+        self.langs = langs
+        names = ", ".join(langs) or "без пометки языка"
+        super().__init__(f"в фильме нет английской звуковой дорожки (есть: {names})")
+
+
+EN_LANGS = {"eng", "en", "english", "en-us", "en-gb"}
+UNKNOWN_LANGS = {"", "und", "unk", "unknown", "mis", "zxx"}
 
 
 def tools_dir() -> str:
@@ -122,6 +136,7 @@ class SyncReport:
     summary: str
     median_shift: float = 0.0
     segments: int = 0
+    track: int | None = None      # номер звуковой дорожки (среди аудио), по которой сверяли
 
 
 def analyze_shift(old: list[Cue], new: list[Cue]) -> SyncReport:
@@ -180,53 +195,143 @@ def backup(path: str) -> str:
     return dest
 
 
-def _run_alass(video: str, cues: list[Cue], stop_flag=None) -> list[Cue]:
-    """Прогоняет alass над копией реплик и возвращает реплики с новыми таймингами."""
+@dataclass
+class AudioTrack:
+    n: int              # номер среди звуковых дорожек (для -map 0:a:n)
+    lang: str
+    title: str
+    default: bool
+
+    def label(self) -> str:
+        t = self.lang or "язык не указан"
+        return f"{t} «{self.title}»" if self.title else t
+
+
+def audio_tracks(video: str, ffprobe: str) -> list[AudioTrack]:
+    cmd = [ffprobe, "-v", "error", "-select_streams", "a", "-show_entries",
+           "stream=index:stream_tags=language,title:stream_disposition=default", "-of", "json", video]
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        out = subprocess.run(cmd, capture_output=True, timeout=120, creationflags=flags).stdout
+        streams = json.loads(out.decode("utf-8", "replace") or "{}").get("streams", [])
+    except (OSError, ValueError, subprocess.SubprocessError) as e:
+        raise SyncError(f"Не удалось прочитать звуковые дорожки фильма: {e}")
+    tracks = []
+    for n, st in enumerate(streams):
+        tags = {k.lower(): v for k, v in (st.get("tags") or {}).items()}
+        tracks.append(AudioTrack(n, str(tags.get("language", "")).strip().lower(),
+                                 str(tags.get("title", "")).strip(),
+                                 bool((st.get("disposition") or {}).get("default"))))
+    return tracks
+
+
+def pick_english(tracks: list[AudioTrack]) -> AudioTrack | None:
+    """Английская дорожка (не комментарий); если языки не размечены — первая неразмеченная."""
+    def is_comment(t):
+        return any(w in t.title.lower() for w in ("comment", "коммент"))
+    eng = [t for t in tracks if (t.lang in EN_LANGS or "english" in t.title.lower()) and not is_comment(t)]
+    if eng:
+        return sorted(eng, key=lambda t: (not t.default, t.n))[0]
+    unk = [t for t in tracks if t.lang in UNKNOWN_LANGS and not is_comment(t)
+           and not any(w in t.title.lower() for w in ("rus", "рус", "дубл", "mvo", "dvo", "avo"))]
+    return unk[0] if unk else None
+
+
+def _wait(proc, stop_flag, limit, name):
+    start = time.time()
+    while proc.poll() is None:
+        if stop_flag and stop_flag():
+            proc.kill()
+            proc.wait()
+            raise SyncError("Остановлено")
+        if time.time() - start > limit:
+            proc.kill()
+            proc.wait()
+            raise SyncError(f"{name} работает слишком долго — прервано")
+        time.sleep(0.3)
+
+
+def _extract_track(video: str, track: int, ffmpeg: str, dest: str, stop_flag=None) -> None:
+    """Вынимает одну звуковую дорожку в отдельный файл (моно 16 кГц, FLAC) — для alass."""
+    cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-i", video, "-map", f"0:a:{track}", "-vn", "-sn",
+           "-ac", "1", "-ar", "16000", "-c:a", "flac", dest]
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
+    except OSError as e:
+        raise SyncError(f"Не удалось запустить ffmpeg: {e}")
+    _wait(proc, stop_flag, 1800, "ffmpeg")
+    if proc.returncode != 0 or not os.path.exists(dest) or os.path.getsize(dest) < 10_000:
+        raise SyncError("ffmpeg не смог извлечь звуковую дорожку")
+
+
+def _alass_once(alass, ref, cues, tmp, env, stop_flag, extra, tag) -> list[Cue]:
+    src = os.path.join(tmp, f"in_{tag}.srt")
+    out = os.path.join(tmp, f"out_{tag}.srt")
+    write_srt(src, [Cue(c.start_ms, c.end_ms, c.text, c.prefix) for c in cues], encoding="utf-8")
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    with open(os.path.join(tmp, f"alass_{tag}.log"), "w+b") as logfile:  # в файл, чтобы не забить канал
+        try:
+            proc = subprocess.Popen([alass, *extra, ref, src, out], stdout=logfile, stderr=subprocess.STDOUT,
+                                    env=env, creationflags=flags)
+        except OSError as e:
+            raise SyncError(f"Не удалось запустить alass: {e}")
+        _wait(proc, stop_flag, 1800, "alass")
+        logfile.seek(0)
+        output = logfile.read().decode("utf-8", "replace")
+    if proc.returncode != 0 or not os.path.exists(out):
+        tail = output.strip().splitlines()[-3:]
+        raise SyncError("alass завершился с ошибкой: " + " / ".join(tail))
+    return read_srt(out)
+
+
+def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
+    """Сверяет реплики со звуком. Возвращает (новые реплики, отчёт); реплики не меняет.
+
+    Сверка идёт по английской дорожке. alass запускается дважды: единый сдвиг для всего фильма
+    и сдвиг по частям; если результаты сильно расходятся, сверке нельзя доверять."""
     tools = find_tools()
     if not tools:
         raise SyncError("Инструменты синхронизации не установлены")
     alass, ffmpeg, ffprobe = tools
+    tracks = audio_tracks(video, ffprobe)
+    if not tracks:
+        raise SyncError("в файле фильма нет звуковых дорожек")
+    track = pick_english(tracks)
+    if track is None:
+        if not allow_other_lang:
+            raise NoEnglishTrack([t.label() for t in tracks])
+        track = tracks[0]
+        log(f"  ⚠ Английской дорожки нет — сверяю по дорожке {track.label()}")
+    elif len(tracks) > 1 or track.lang not in EN_LANGS:
+        log(f"  Звуковая дорожка для сверки: №{track.n + 1}, {track.label()}")
     env = dict(os.environ, ALASS_FFMPEG_PATH=ffmpeg, ALASS_FFPROBE_PATH=ffprobe)
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     with tempfile.TemporaryDirectory() as tmp:
-        # alass получает копию в UTF-8 — исходный файл и его формат он не трогает
-        src = os.path.join(tmp, "in.srt")
-        out = os.path.join(tmp, "out.srt")
-        write_srt(src, [Cue(c.start_ms, c.end_ms, c.text, c.prefix) for c in cues], encoding="utf-8")
-        cmd = [alass, video, src, out]
-        logfile = open(os.path.join(tmp, "alass.log"), "w+b")  # в файл, чтобы вывод не забил канал
-        try:
-            proc = subprocess.Popen(cmd, stdout=logfile, stderr=subprocess.STDOUT, env=env,
-                                    creationflags=flags)
-        except OSError as e:
-            logfile.close()
-            raise SyncError(f"Не удалось запустить alass: {e}")
-        start = time.time()
-        while proc.poll() is None:
-            if stop_flag and stop_flag():
-                proc.kill()
-                proc.wait()
-                logfile.close()
-                raise SyncError("Остановлено")
-            if time.time() - start > 1800:
-                proc.kill()
-                proc.wait()
-                logfile.close()
-                raise SyncError("alass работает слишком долго — прервано")
-            time.sleep(0.3)
-        logfile.seek(0)
-        output = logfile.read().decode("utf-8", "replace")
-        logfile.close()
-        if proc.returncode != 0 or not os.path.exists(out):
-            tail = output.strip().splitlines()[-3:]
-            raise SyncError("alass завершился с ошибкой: " + " / ".join(tail))
-        return read_srt(out)
+        ref = video
+        if len(tracks) > 1 and track.n != 0:
+            ref = os.path.join(tmp, "audio.mkv")
+            _extract_track(video, track.n, ffmpeg, ref, stop_flag)
+        whole = _alass_once(alass, ref, cues, tmp, env, stop_flag, ["--no-splits"], "whole")
+        parts = _alass_once(alass, ref, cues, tmp, env, stop_flag, [], "parts")
+    rep_whole = analyze_shift(cues, whole)
+    rep = analyze_shift(cues, parts)
+    rep.track = track.n
+    fps_fix = rep.summary.startswith("Исправлена скорость")
+    if rep.status == "changed" and rep.segments > 1 and not fps_fix and len(cues) == len(whole):
+        # по частям и целиком должно получаться похоже: большинство реплик — с тем же сдвигом
+        near = sum(1 for a, b in zip(whole, parts) if abs(a.start_ms - b.start_ms) <= 2000)
+        if near < len(cues) * 0.6:
+            alt = f"единый сдвиг {rep_whole.median_shift:+.1f} с" if rep_whole.status != "rejected" else "единого сдвига нет"
+            return parts, SyncReport(
+                "rejected", f"Сверка со звуком ненадёжна: по частям в среднем {rep.median_shift:+.1f} с, "
+                            f"а для всего фильма — {alt}. Вероятно, другое издание фильма или звук "
+                            "не той дорожки — тайминги не меняю", rep.median_shift, rep.segments, track.n)
+    return parts, rep
 
 
 def sync_cues(video: str, cues: list[Cue], log, stop_flag=None) -> SyncReport:
     """Подгоняет тайминги реплик в памяти (без записи файла). Подозрительный результат не применяет."""
-    new = _run_alass(video, cues, stop_flag)
-    report = analyze_shift(cues, new)
+    new, report = align(video, cues, log, stop_flag)
     if report.status == "changed":
         for o, n in zip(cues, new):
             o.start_ms, o.end_ms = n.start_ms, n.end_ms
@@ -238,13 +343,13 @@ def sync_cues(video: str, cues: list[Cue], log, stop_flag=None) -> SyncReport:
     return report
 
 
-def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_flag=None) -> SyncReport:
+def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_flag=None,
+                   allow_other_lang=False) -> SyncReport:
     old = read_srt(srt_path)
     if not old:
         raise SyncError("Файл субтитров пустой")
     log(f"  Синхронизирую {os.path.basename(srt_path)} по звуку {os.path.basename(video)}…")
-    new = _run_alass(video, old, stop_flag)
-    report = analyze_shift(old, new)
+    new, report = align(video, old, log, stop_flag, allow_other_lang=allow_other_lang)
     if report.status == "changed":
         saved = backup(srt_path)
         for o, n in zip(old, new):

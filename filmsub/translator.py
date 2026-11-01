@@ -68,6 +68,13 @@ def output_path_for(path: str) -> str:
     return base + ".ru.srt"
 
 
+def film_year(path: str) -> int | None:
+    """Год выхода из имени файла: «Take the Money and Run (1969) 1080p…» → 1969."""
+    name = os.path.basename(_split_name(path)[0])
+    years = re.findall(r"(?<![0-9])(19[2-9][0-9]|20[0-4][0-9])(?![0-9])", name)
+    return int(years[-1]) if years else None
+
+
 def film_title_hint(path: str) -> str:
     name = os.path.basename(_split_name(path)[0])
     name = re.sub(r"[._]+", " ", name)
@@ -221,7 +228,8 @@ ANALYSIS_GLOSSARY_ADDON = """
 встречается в тексте, не больше 40 строк. Обычные слова, имена и названия не включай.
 
 В самом начале справки, второй строкой после «Фильм: …», добавь строку строго в формате:
-МЕТКИ: страна=<UK, US, AU, IE или другая — где происходит действие и откуда герои>; год=<год действия>"""
+МЕТКИ: страна=<UK, US, AU, IE или другая — где происходит действие и откуда герои>; год=<год выхода фильма, а не год, \
+когда происходит действие>"""
 
 NEW_STYLE_RULES = """Сленг, идиомы и реалии:
 - Если буквальный перевод звучит странно или бессмысленно — это почти наверняка идиома, сленг, диалект \
@@ -475,6 +483,8 @@ class FileTranslator:
         self._glossary = None
         self._film_entries = film_entries or []
         self._region, self._year = parse_meta(notes)
+        if getattr(self, "_file_year", None):
+            self._year = self._file_year      # год из имени файла надёжнее догадки модели
         if self.style == "new":
             extra = NEW_STYLE_RULES
             if getattr(self.s, "use_glossary", True):
@@ -525,7 +535,7 @@ class FileTranslator:
     def _prepare_voices(self, video: str, cues: list[Cue]) -> None:
         """Подгоняет тайминги под звук и определяет пол голоса по каждой реплике."""
         from . import voices as V
-        from .sync import SyncError, find_tools, sync_cues
+        from .sync import NoEnglishTrack, SyncError, find_tools, sync_cues
         tools = find_tools()
         if not tools:
             self.log("  Определение голосов пропущено: нет ffmpeg (скачается при первой синхронизации)")
@@ -535,17 +545,25 @@ class FileTranslator:
         orig = [(c.start_ms, c.end_ms) for c in cues]
         try:
             rep = sync_cues(video, cues, self.log, stop_flag=self.stop_flag)
+        except NoEnglishTrack as e:
+            self.log(f"  ⚠ Голоса не определяю: {e}. По озвучке пол героев не определить")
+            return
         except SyncError as e:
             if self.stop_flag():
                 raise Stopped()
             self.log(f"  ⚠ Синхронизация не удалась ({e}) — голоса не определяю, переведу без них")
             return
         if rep.status == "rejected":
-            self.log("  ⚠ Субтитры, похоже, от другой версии фильма — голоса не определяю")
+            self.log("  ⚠ Сверка со звуком не удалась — голоса не определяю, переведу без них")
             return
         try:
             self._voices = V.detect(video, cues, tools[1], log=self.log, stop_flag=self.stop_flag,
-                                    progress=lambda f: self.progress(0.03 + 0.04 * f, "Голоса"))
+                                    progress=lambda f: self.progress(0.03 + 0.04 * f, "Голоса"),
+                                    track=rep.track)
+            if getattr(self.s, "save_voice_labels", False):
+                lab = self._voice_labels_path
+                write_srt(lab, V.labels_srt(cues, self._voices), encoding=self.s.encoding)
+                self.log(f"  Пометки голосов для проверки: {os.path.basename(lab)}")
         except V.VoiceError as e:
             if self.stop_flag():
                 raise Stopped()
@@ -662,6 +680,10 @@ class FileTranslator:
                 target = alt_output_path(path)
 
         self._voices = self._timing = None
+        self._file_year = film_year(path)
+        out_ru = output_path_for(path)
+        self._voice_labels_path = (out_ru[:-len(".ru.srt")] if out_ru.endswith(".ru.srt")
+                                   else os.path.splitext(out_ru)[0]) + ".voices.srt"
         src = load_source(path, self.s, self.log,
                           progress=lambda f: self.progress(f * 0.05, "Чтение MKV"))
         if not src:
@@ -807,6 +829,8 @@ def collect_inputs(paths: list[str]) -> list[str]:
                     if ext in VIDEO_EXT:
                         result.append(full)
                     elif ext in SUB_EXT:
+                        if name.lower().endswith(".voices.srt"):
+                            continue          # пометки голосов, сделанные самой программой
                         stem, tokens = _split_name(full)
                         if any(t in RU_TOKENS for t in tokens) or is_russian_variant(full):
                             continue

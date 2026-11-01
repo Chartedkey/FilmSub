@@ -5,6 +5,10 @@
 у женщин 165–255 Гц. Реплики-диалоги («- …\\n- …») делятся по времени пропорционально
 длине строк, и каждая строка оценивается отдельно.
 
+Граница между «низкими» и «высокими» голосами подбирается под каждый фильм: высоты голосов всех
+реплик делятся на две группы, и граница ставится посередине. Возле границы пометка не ставится —
+так высокий мужской голос (как у Вуди Аллена) не превращается в женский.
+
 Результат — пометка «м», «ж» или пусто (не уверены: музыка, шум, шёпот, детский голос).
 """
 
@@ -21,6 +25,10 @@ HOP = 80                  # 10 мс
 F0_MIN, F0_MAX = 70, 400  # Гц
 MALE_MAX, FEMALE_MIN = 155.0, 172.0
 MIN_VOICED = 8            # минимум «звонких» кадров для решения
+UNSURE = 0.10             # ±10 % вокруг границы — не помечаем
+# Жёсткие пределы поверх подбора: высокий мужской голос в разговоре доходит до 180 Гц,
+# низкий женский опускается до 170 — эту зону лучше оставить без пометки, чем ошибиться.
+HARD_MALE_MAX, HARD_FEMALE_MIN = 150.0, 190.0
 
 
 class VoiceError(Exception):
@@ -93,24 +101,72 @@ def estimate_f0(samples) -> tuple[float | None, int]:
     return float(np.median(good)), int(good.size)
 
 
-def classify(f0: float | None, voiced: int) -> str:
+def classify(f0: float | None, voiced: int, male_max: float = MALE_MAX, female_min: float = FEMALE_MIN) -> str:
     if f0 is None or voiced < MIN_VOICED:
         return ""
-    if f0 <= MALE_MAX:
+    if f0 <= male_max:
         return "м"
-    if FEMALE_MIN <= f0 <= 300:
+    if female_min <= f0 <= 300:
         return "ж"
     return ""          # промежуточная зона или детский/крик — не уверены
 
 
-def read_audio(video: str, ffmpeg: str, start_ms: int, end_ms: int, stop_flag=None, progress=None):
+def calibrate(f0s: list[float]) -> tuple[float, float, str]:
+    """Пороги «мужской до…» и «женский от…» для этого фильма и пояснение для журнала.
+
+    Две группы ищутся k-средними по логарифму высоты. Группа считается мужской, только если её центр
+    не выше 165 Гц, и женской — если не ниже 180 Гц; иначе такой группы в фильме нет и её пометки
+    не ставятся вовсе."""
+    import math
+    vals = sorted(math.log(f) for f in f0s if f and 70 <= f <= 320)
+    if len(vals) < 20:
+        return HARD_MALE_MAX, HARD_FEMALE_MIN, "мало данных — стандартные пороги"
+    lo, hi = math.log(120), math.log(215)
+    for _ in range(50):
+        mid = (lo + hi) / 2
+        a = [v for v in vals if v <= mid]
+        b = [v for v in vals if v > mid]
+        if not a or not b:
+            break
+        nlo, nhi = sum(a) / len(a), sum(b) / len(b)
+        if abs(nlo - lo) < 1e-4 and abs(nhi - hi) < 1e-4:
+            break
+        lo, hi = nlo, nhi
+    c_lo, c_hi = math.exp(lo), math.exp(hi)
+    has_m, has_f = c_lo <= 165, c_hi >= 180
+    if has_m and has_f:
+        border = math.sqrt(c_lo * c_hi)
+        border = min(185.0, max(150.0, border))
+        male_max = min(HARD_MALE_MAX, border * (1 - UNSURE))
+        female_min = max(HARD_FEMALE_MIN, border * (1 + UNSURE))
+        if c_hi < 205:
+            # «высокая» группа подозрительно низкая — в ней, видимо, и высокие мужские голоса
+            female_min = max(female_min, c_hi * 1.06)
+        note = (f"граница {border:.0f} Гц (низкие голоса ≈{c_lo:.0f}, высокие ≈{c_hi:.0f}); "
+                f"от {male_max:.0f} до {female_min:.0f} Гц — без пометки")
+    elif has_m:
+        male_max, female_min = min(HARD_MALE_MAX, c_lo * 1.25), 10_000.0
+        note = f"женских голосов почти нет (голоса ≈{c_lo:.0f}–{c_hi:.0f} Гц) — ставлю только «м»"
+    elif has_f:
+        male_max, female_min = 0.0, max(HARD_FEMALE_MIN, c_hi * 0.85)
+        note = f"мужских голосов почти нет (голоса ≈{c_lo:.0f}–{c_hi:.0f} Гц) — ставлю только «ж»"
+    else:
+        male_max, female_min = 0.0, 10_000.0
+        note = f"голоса не делятся на низкие и высокие (≈{c_lo:.0f}–{c_hi:.0f} Гц) — пометки не ставлю"
+    return male_max, female_min, note
+
+
+def read_audio(video: str, ffmpeg: str, start_ms: int, end_ms: int, stop_flag=None, progress=None,
+               track: int | None = None):
     """Читает звук фильма в нужном диапазоне потоком (моно, 8 кГц, int16)."""
     import numpy as np
 
     ss = max(0.0, start_ms / 1000 - 1)
     dur = (end_ms - start_ms) / 1000 + 2
-    cmd = [ffmpeg, "-v", "error", "-nostdin", "-ss", f"{ss:.3f}", "-i", video, "-t", f"{dur:.3f}",
-           "-vn", "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"]
+    cmd = [ffmpeg, "-v", "error", "-nostdin", "-ss", f"{ss:.3f}", "-i", video, "-t", f"{dur:.3f}"]
+    if track is not None:
+        cmd += ["-map", f"0:a:{track}"]
+    cmd += ["-vn", "-sn", "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"]
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=flags)
@@ -138,37 +194,52 @@ def read_audio(video: str, ffmpeg: str, start_ms: int, end_ms: int, stop_flag=No
     return np.frombuffer(data[: len(data) // 2 * 2], dtype="<i2"), ss
 
 
-def detect(video: str, cues: list[Cue], ffmpeg: str, log=None, progress=None, stop_flag=None) -> list[str]:
+def detect(video: str, cues: list[Cue], ffmpeg: str, log=None, progress=None, stop_flag=None,
+           track: int | None = None) -> list[str]:
     """Возвращает для каждой реплики пометку: «м», «ж», «м, ж» (диалог) или пусто."""
     if not cues:
         return []
     start = min(c.start_ms for c in cues)
     end = max(c.end_ms for c in cues)
     audio, offset_s = read_audio(video, ffmpeg, start, end, stop_flag,
-                                 progress=(lambda f: progress(0.8 * f)) if progress else None)
-    labels = []
+                                 progress=(lambda f: progress(0.7 * f)) if progress else None, track=track)
     segs_all = segments_for(cues)
-    known = 0
+    measured: list[list[tuple[float | None, int]]] = []
     for i, segs in enumerate(segs_all):
         parts = []
         for a, b in segs:
             i0 = int((a / 1000 - offset_s) * SR)
             i1 = int((b / 1000 - offset_s) * SR)
             if i1 - i0 < FRAME * 2 or i0 < 0 or i1 > audio.size:
-                parts.append("")
+                parts.append((None, 0))
                 continue
-            f0, n = estimate_f0(audio[i0:i1])
-            parts.append(classify(f0, n))
-        label = ", ".join(p or "?" for p in parts) if len(parts) > 1 else parts[0]
+            parts.append(estimate_f0(audio[i0:i1]))
+        measured.append(parts)
+        if progress and i % 50 == 0:
+            progress(0.7 + 0.3 * i / len(segs_all))
+    f0s = [f for parts in measured for f, n in parts if f is not None and n >= MIN_VOICED]
+    male_max, female_min, note = calibrate(f0s)
+    if log:
+        log(f"  Голоса: {note}")
+    labels = []
+    for parts in measured:
+        marks = [classify(f, n, male_max, female_min) for f, n in parts]
+        label = ", ".join(p or "?" for p in marks) if len(marks) > 1 else marks[0]
         if label.replace("?", "").replace(",", "").strip() == "":
             label = ""
         labels.append(label)
-        known += bool(label)
-        if progress and i % 50 == 0:
-            progress(0.8 + 0.2 * i / len(segs_all))
     if log:
+        known = sum(1 for l in labels if l)
         m = sum(1 for l in labels if l == "м")
         f = sum(1 for l in labels if l == "ж")
-        log(f"  Голоса: определено для {known} из {len(labels)} реплик (мужской {m}, женский {f}, "
-            f"остальные — диалоги или неуверенно)")
+        log(f"  Голоса: помечено {known} из {len(labels)} реплик (мужской {m}, женский {f}, "
+            f"остальные — диалоги; без пометки {len(labels) - known})")
     return labels
+
+
+def labels_srt(cues: list[Cue], labels: list[str]) -> list[Cue]:
+    """Копия реплик с пометками голоса в начале — чтобы проверить определение в плеере."""
+    out = []
+    for c, l in zip(cues, labels):
+        out.append(Cue(c.start_ms, c.end_ms, f"[{l or '—'}] " + c.text, c.prefix))
+    return out
