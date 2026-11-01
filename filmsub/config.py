@@ -35,7 +35,9 @@ class Settings:
     sync_after: bool = False       # синхронизировать со звуком после перевода
     batch_size: int = 40
     workers: int = 4
-    overwrite: bool = False
+    overwrite: bool = False        # устарело: заменено existing_mode
+    existing_mode: str = "ask"     # если перевод уже есть: ask / overwrite / alt / skip
+    check_updates: bool = True     # проверять обновления при запуске
     skip_if_russian: bool = True
     encoding: str = "utf-8-sig"    # utf-8-sig (UTF-8 с BOM) или cp1251
     last_dir: str = ""

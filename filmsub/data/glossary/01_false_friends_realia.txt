@@ -1,0 +1,187 @@
+# Ложные друзья и бытовые реалии, где смысл зависит от страны или эпохи.
+# Только то, на чём модели реально ошибаются; очевидные слова сюда не включаем.
+# Формат: выражение | как переводить | пояснение [| регион | эпоха]
+# Регион: UK, US, AU, IE, SC (Шотландия); эпоха: old (до ~1975), modern (после ~1995). Пусто — везде.
+#@ region=* era=*
+first floor | второй этаж (UK) / первый этаж (US) | зависит от страны фильма
+ground floor | первый этаж | UK
+pants | трусы (UK) / брюки (US) | зависит от страны фильма
+vest | майка (UK) / жилет (US) | зависит от страны фильма
+jumper | свитер | UK
+biscuit | печенье (UK) / булочка (US) | зависит от страны
+chips | картошка фри (UK) / чипсы (US) | зависит от страны
+crisps | чипсы | UK
+public school | частная элитная школа (UK) / обычная госшкола (US) | зависит от страны
+rubber | ластик (UK) / презерватив (US) | зависит от страны
+fag | сигарета (UK) / оскорбление гея (US) | зависит от страны и контекста
+fags | сигареты | UK
+chuck sb a fag | кинь сигарету | UK
+on the wagon | в завязке, не пьёт |
+off the wagon | сорвался, снова запил |
+pavement | тротуар | не «мостовая» | UK
+surgery | приёмная врача | не только «операция» | UK
+chemist | аптека | «at the chemist's» | UK
+GP | участковый врач, терапевт | UK
+A&E | приёмный покой, травмпункт | UK
+council house | муниципальный дом, социальное жильё | UK
+council estate | район социального жилья | UK
+the dole | пособие по безработице | UK
+on the dole | на пособии по безработице | UK
+on welfare | на пособии | US
+solicitor | адвокат, юрист (не судебный) | UK
+barrister | адвокат в суде | UK
+DA | окружной прокурор | US
+the pictures | кино | «go to the pictures» — сходить в кино | UK
+telly | телик | UK
+the box | телик | UK |
+wireless | радиоприёмник | | UK | old
+tea | ужин; вечерняя еда (у рабочего класса); чай | на севере Англии «my tea» = ужин | UK
+dinner | обед (у рабочего класса UK днём); ужин | по контексту | UK
+pudding | десерт, сладкое | UK
+afters | сладкое, десерт | UK
+cuppa | чашка чая, чаёк | UK
+brew | чай (UK); пиво (US) | зависит от страны
+loo | туалет | UK
+bin | мусорное ведро | UK
+dustbin | мусорный бак | UK
+dustman | мусорщик | UK
+give sb a lift | подвезти | UK
+give sb a ride | подвезти | US
+petrol | бензин | UK
+lorry | грузовик | UK
+queue | очередь | UK
+jump the queue | влезть без очереди | UK
+fortnight | две недели | UK
+bank holiday | выходной, госпраздник | UK
+Boxing Day | второй день Рождества (26 декабря) | UK
+fete | ярмарка, праздник под открытым небом | UK
+jumble sale | благотворительная распродажа старья | UK
+yard sale | распродажа вещей у дома | US
+garage sale | распродажа вещей из гаража | US
+semi | полдома (дом на две семьи) | UK
+terraced house | дом в ряду, рядовой дом | UK
+caravan | дом на колёсах | UK
+pram | детская коляска | UK
+nappy | подгузник | UK
+dummy | соска (UK); болван | по контексту
+sweets | конфеты | UK
+lolly | леденец на палочке; деньги (сленг) | UK
+ice lolly | фруктовый лёд | UK
+off-licence | винный магазин | UK
+offie | винный магазин | UK
+liquor store | винный магазин | US
+quid | фунт (деньги) | UK
+fiver | пятёрка (5 фунтов/долларов) |
+tenner | десятка (10 фунтов) | UK
+a monkey | пятьсот фунтов | сленг | UK
+a pony | двадцать пять фунтов | сленг; не «пони», если о деньгах | UK
+buck | доллар, бакс | US
+nickel | пять центов | US
+dime | десять центов | US
+dime a dozen | пруд пруди | US
+nickel and dime | мелочиться, обдирать по мелочи | US
+shilling | шиллинг | | UK | old
+half a crown | полкроны | монета 2,5 шиллинга | UK | old
+threepence | три пенса, трёхпенсовик | | UK | old
+threepenny | трёхпенсовый; за три пенса | | UK | old
+fourpenny | четырёхпенсовый | | UK | old
+sixpence | шестипенсовик | | UK | old
+tanner | шестипенсовик | | UK | old
+guinea | гинея (21 шиллинг) | | UK | old
+ten a penny | пруд пруди, за копейку десяток | UK
+two a penny | пруд пруди | UK
+spend a penny | сходить в туалет | эвфемизм | UK
+the penny dropped | дошло, до него дошло | UK
+in for a penny, in for a pound | назвался груздем — полезай в кузов | UK
+a bad penny | от него не отвяжешься (всегда возвращается) | «turn up like a bad penny» | UK
+mam | мама | север Англии, Ирландия | UK
+our kid | мой младший брат, братишка | север Англии; обращение к брату | UK
+lad | парень; сынок | UK
+lass | девушка, девчонка | север Англии, Шотландия | UK
+lasses | девчонки | | UK
+bloke | мужик, парень | UK
+chap | парень, малый | UK
+gaffer | начальник; старик | UK
+guv | шеф, начальник (обращение) | UK
+guv'nor | шеф, хозяин; отец | UK
+the old man | отец, батя; начальник; муж | по контексту
+the missus | жена, хозяйка | UK
+her indoors | жена, моя благоверная | шутл. | UK
+trouble and strife | жена | кокни, рифм. сленг | UK
+the old lady | мать; жена | по контексту
+in the club | беременна, «залетела» | | UK
+up the duff | беременна, «залетела» | | UK
+in the pudding club | в положении, «залетела» | | UK | old
+bun in the oven | ребёнок на подходе, беременна |
+in the family way | в положении, беременна | | | old
+public house | паб, пивная | UK
+publican | хозяин паба | UK
+last orders | последний заказ (паб закрывается) | UK
+time, gentlemen, please | закрываемся, господа! | клич бармена | UK
+my round | я угощаю (моя очередь платить) | о выпивке | UK
+your round | твоя очередь угощать | UK
+a half | полпинты | о пиве | UK
+bitter | горькое пиво, биттер | о пиве | UK
+shandy | пиво с лимонадом | UK
+mild | лёгкое тёмное пиво | о пиве | UK
+plonk | дешёвое вино, бормотуха | UK
+fish and chips | рыба с жареной картошкой | UK
+chippy | забегаловка с рыбой и картошкой | UK
+bap | булочка | UK
+butty | бутерброд | север Англии | UK
+sarnie | бутерброд | UK
+banger | сосиска; старая машина-развалюха | UK
+bangers and mash | сосиски с пюре | UK
+spotted dick | пудинг с изюмом | десерт, не неприличное | UK
+toad in the hole | сосиски в тесте | UK
+bubble and squeak | жареная капуста с картошкой | UK
+nosh | жратва, еда | UK
+scran | жратва | север, Шотландия | UK
+bedsit | комнатушка, однокомнатная | UK
+the tube | метро (Лондон) | UK
+the underground | метро | UK
+the subway | метро (US); подземный переход (UK) | зависит от страны
+zebra crossing | пешеходный переход, «зебра» | UK
+roundabout | кольцевая развязка; карусель | UK
+dual carriageway | шоссе с разделителем | UK
+the motorway | трасса, автострада | UK
+hire purchase | рассрочка | UK | old
+on the never-never | в рассрочку | UK | old
+the pools | футбольный тотализатор | «win the pools» — выиграть в тотализатор | UK
+eyes down | начинаем! (клич в бинго) | бинго | UK
+full house | всё закрыто, выигрыш (в бинго) | бинго; в покере — фулл-хаус |
+double top | двойная двадцатка | дартс | UK
+skittles | кегли | UK
+conkers | игра в каштаны | UK
+draughts | шашки | UK
+draughtsman | чертёжник | UK
+drawing board | кульман, чертёжная доска |
+boards | кульманы, чертёжные доски | у чертёжников |
+back to the drawing board | придётся начинать сначала |
+white-collar | служащий, «белый воротничок» |
+blue-collar | рабочий |
+shop floor | цех, рабочие | UK
+clock in | отметиться на работе |
+clock off | закончить смену, уйти с работы | UK
+knock off | закончить работу; стащить, украсть; убить | по контексту
+knocking-off time | конец рабочего дня | UK
+Christmas box | рождественские чаевые (почтальону, молочнику) | UK
+milk float | электротележка молочника | UK
+spot cash | наличными сразу |
+the Odeon | «Одеон» (кинотеатр) | UK
+the Palais | танцзал «Пале» | UK | old
+the dancehall | танцзал, танцы |
+the back row | задний ряд (в кино, где целуются) |
+courting | гулять, встречаться (о паре) | UK | old
+walking out | встречаться, гулять с кем-то | UK | old
+going steady | встречаться всерьёз | | | old
+young man | ухажёр, парень | «her young man» | | old
+the front room | гостиная (парадная комната) | UK
+the parlour | гостиная | | | old
+the scullery | судомойня, кухонька | UK | old
+the loft | чердак (UK); мансарда-квартира (US) |
+the allotment | огород (на участке за городом) | UK
+the back garden | двор, садик за домом | UK
+ten bob | десять шиллингов | | UK | old
+five bob | пять шиллингов | | UK | old
+a few bob | пара монет, немного деньжат | | UK | 

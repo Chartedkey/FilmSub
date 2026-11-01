@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from .api import ApiError, ChatClient, Usage
 from .config import Settings, app_dir
-from .glossary import Entry, Glossary, format_for_prompt, parse_glossary_block
+from .glossary import Entry, Glossary, format_hints, parse_glossary_block, parse_meta
 from .mkv import MkvError, pick_english_track, read_mkv_subtitles
 from .srt import POS_TAG_RE, Cue, read_srt, strip_sdh, write_srt
 
@@ -30,6 +30,23 @@ class Stopped(Exception):
 # --------------------------------------------------------------------------
 # Поиск исходных субтитров
 # --------------------------------------------------------------------------
+
+_VARIANT_RE = re.compile(r"\.(?:ru|rus|russian)\.v\d+$", re.I)
+
+
+def is_russian_variant(path: str) -> bool:
+    """«Фильм.ru.v2.srt» — второй вариант перевода, не исходник."""
+    return bool(_VARIANT_RE.search(os.path.splitext(path)[0]))
+
+
+def alt_output_path(path: str) -> str:
+    """Свободное имя для второго варианта перевода: Фильм.ru.v2.srt, Фильм.ru.v3.srt…"""
+    base, _ = _split_name(path)
+    n = 2
+    while os.path.exists(f"{base}.ru.v{n}.srt"):
+        n += 1
+    return f"{base}.ru.v{n}.srt"
+
 
 def _split_name(path: str) -> tuple[str, list[str]]:
     """'Movie.2010.en.sdh.srt' -> ('…/Movie.2010', ['en', 'sdh'])"""
@@ -118,7 +135,7 @@ def load_source(path: str, settings: Settings, log, progress=None) -> Source | N
 
     if ext in SUB_EXT:
         _, tokens = _split_name(path)
-        if any(t in RU_TOKENS for t in tokens):
+        if any(t in RU_TOKENS for t in tokens) or is_russian_variant(path):
             log("  Это уже русские субтитры — пропускаю")
             return None
         cues = read_srt(path)
@@ -201,7 +218,10 @@ ANALYSIS_GLOSSARY_ADDON = """
 жаргон, реалии эпохи и страны. По одному в строке, формат строго:
 английское выражение | как переводить по-русски | короткое пояснение
 Английское выражение пиши так, как оно стоит в субтитрах, без лишних слов вокруг. Только то, что реально
-встречается в тексте, не больше 40 строк. Обычные слова, имена и названия не включай."""
+встречается в тексте, не больше 40 строк. Обычные слова, имена и названия не включай.
+
+В самом начале справки, второй строкой после «Фильм: …», добавь строку строго в формате:
+МЕТКИ: страна=<UK, US, AU, IE или другая — где происходит действие и откуда герои>; год=<год действия>"""
 
 NEW_STYLE_RULES = """Сленг, идиомы и реалии:
 - Если буквальный перевод звучит странно или бессмысленно — это почти наверняка идиома, сленг, диалект \
@@ -210,6 +230,16 @@ NEW_STYLE_RULES = """Сленг, идиомы и реалии:
 речь эпохи.
 - Реалии (деньги, меры, газеты, магазины, передачи) оставляй узнаваемыми: «полкроны», «три пенса», «Гардиан».
 - Обращения вроде love, mate, lad, duck переводи по ситуации («милая», «приятель», «сынок»), а не одним словом.
+- В поле "hints" запроса — подсказки из словаря к выражениям, которые встречаются в этой пачке. Это частые \
+значения: проверяй их по контексту — иногда слово значит буквально то, что сказано.
+
+Род и обращения:
+- В субтитрах не видно, кто говорит. Определи говорящего по контексту, справке о фильме и соседним репликам. \
+Если уверенности нет — строй фразу без рода, например в настоящем времени или безлично: \
+«Не в курсе, что он ушёл» вместо «Я не знал(а), что он ушёл».
+- Не меняй «ты»/«вы» между персонажами внутри одной сцены без явной причины (знакомство, ссора, сближение). \
+Смотри, как они обращались друг к другу в блоке "before".
+- Следи за единообразием: одна и та же реалия в фильме переводится одинаково.
 
 Примеры из других фильмов — как не надо и как надо:
 - "Break a leg!" — не «Сломай ногу!», а «Ни пуха ни пера!»
@@ -221,11 +251,8 @@ NEW_STYLE_RULES = """Сленг, идиомы и реалии:
 
 """
 
-GLOSSARY_PROMPT = """Словарь выражений (подсказки из прошлых фильмов и разбора этого; проверяй по контексту — \
-иногда выражение значит буквально то, что сказано):
-{entries}
-
-"""
+HINTS_PER_BATCH = 12
+TEMPERATURE = {"classic": 0.6, "new": 0.3}
 
 PROFANITY = {
     "asis": "Нецензурную лексику оригинала передавай равноценным русским матом — не смягчай и не "
@@ -424,19 +451,26 @@ class FileTranslator:
         if self.style == "new":
             notes, entries = parse_glossary_block(notes)
             # В словарь берём только выражения, которые действительно есть в субтитрах
-            entries = Glossary().relevant("\n".join(c.text for c in cues), extra=entries, limit=100)
+            entries = Glossary().relevant("\n".join(c.text for c in cues), extra=entries, limit=100,
+                                          use_base=False)
         return notes[:4000], entries
 
     def build_system(self, notes: str, cues: list[Cue], film_entries: list[Entry]) -> str:
+        """Системный промпт одинаков для всех пачек (кэшируется у провайдера).
+        Подсказки словаря идут в каждую пачку отдельно — только для её реплик."""
         extra = ""
+        self._glossary = None
+        self._film_entries = film_entries or []
+        self._region, self._year = parse_meta(notes)
         if self.style == "new":
             extra = NEW_STYLE_RULES
             if getattr(self.s, "use_glossary", True):
-                text = "\n".join(c.text for c in cues)
-                hits = Glossary.load().relevant(text, extra=film_entries)
-                if hits:
-                    extra += GLOSSARY_PROMPT.format(entries=format_for_prompt(hits))
-                    self.log(f"  Подсказок из словаря для этого фильма: {len(hits)}")
+                self._glossary = Glossary.load()
+                total = self._glossary.relevant("\n".join(c.text for c in cues), extra=self._film_entries,
+                                                region=self._region, year=self._year, limit=10_000)
+                where = ", ".join(x for x in (self._region, str(self._year or "")) if x)
+                self.log(f"  Подсказок из словаря для фильма: {len(total)}"
+                         + (f" (с учётом: {where})" if where else ""))
         return TRANSLATE_SYSTEM.format(
             profanity=PROFANITY.get(self.s.profanity, PROFANITY["asis"]),
             notes=notes or "(нет — ориентируйся по контексту)",
@@ -484,6 +518,12 @@ class FileTranslator:
             "translate": [{"id": i + 1, "en": cues[i].text} for i in idxs],
             "after": after,
         }
+        g = getattr(self, "_glossary", None)
+        if g is not None:
+            hits = g.relevant("\n".join(cues[i].text for i in idxs), extra=self._film_entries,
+                              region=self._region, year=self._year, limit=HINTS_PER_BATCH)
+            if hits:
+                payload["hints"] = format_hints(hits)
         user = json.dumps(payload, ensure_ascii=False)
         max_tokens = min(8000, 800 + 200 * len(idxs))
 
@@ -491,7 +531,7 @@ class FileTranslator:
         for attempt in range(2):
             try:
                 content, usage = self.client.chat_retry(
-                    system, user, max_tokens=max_tokens, temperature=0.6,
+                    system, user, max_tokens=max_tokens, temperature=TEMPERATURE.get(self.style, 0.6),
                     stop_flag=self.stop_flag, log=self.log)
                 self._add_usage(usage)
                 if usage.truncated:
@@ -545,12 +585,21 @@ class FileTranslator:
                 else:
                     self._translate_batch(system, cues, g)
 
-    def translate(self, path: str) -> dict:
+    def translate(self, path: str, existing: str | None = None) -> dict:
+        """existing — что делать, если перевод уже есть: overwrite (с копией старого), alt (сохранить
+        вторым вариантом Фильм.ru.v2.srt) или skip. По умолчанию — из настроек."""
         self.log(f"▶ {os.path.basename(path)}")
         out = output_path_for(path)
-        if os.path.exists(out) and not self.s.overwrite:
-            self.log(f"  Уже есть {os.path.basename(out)} — пропускаю (включите «Перезаписывать»)")
-            return {"status": "skipped"}
+        mode = existing or ("overwrite" if self.s.overwrite else getattr(self.s, "existing_mode", "skip"))
+        if mode == "ask":
+            mode = "skip"
+        target = out
+        if os.path.exists(out):
+            if mode == "skip":
+                self.log(f"  Уже есть {os.path.basename(out)} — пропускаю")
+                return {"status": "skipped"}
+            if mode == "alt":
+                target = alt_output_path(path)
 
         src = load_source(path, self.s, self.log,
                           progress=lambda f: self.progress(f * 0.05, "Чтение MKV"))
@@ -605,6 +654,11 @@ class FileTranslator:
             return {"status": "stopped"}
 
         failed = sum(1 for c in cues if not c.ru)
+        if target == src.output and os.path.exists(target):
+            from .sync import backup
+            saved = backup(target)
+            self.log(f"  Прежний перевод сохранён в копии: {saved}")
+        src.output = target
         write_srt(src.output, cues, encoding=self.s.encoding)
         try:
             os.remove(cache)
@@ -684,7 +738,7 @@ def collect_inputs(paths: list[str]) -> list[str]:
                         result.append(full)
                     elif ext in SUB_EXT:
                         stem, tokens = _split_name(full)
-                        if any(t in RU_TOKENS for t in tokens):
+                        if any(t in RU_TOKENS for t in tokens) or is_russian_variant(full):
                             continue
                         # .srt рядом с видео будет взят через само видео
                         if any(os.path.exists(stem + e) for e in VIDEO_EXT):

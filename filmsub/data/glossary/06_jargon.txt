@@ -1,0 +1,237 @@
+# Профессиональный жаргон: армия, полиция, криминал, суд, медицина, офис, авиация, море.
+#@ region=* era=*
+# --- армия ---
+AWOL | в самоволке |
+go AWOL | уйти в самоволку |
+GI | американский солдат |
+squaddie | солдат, рядовой | UK
+top brass | высшее командование |
+CO | командир |
+XO | старпом, зам командира |
+NCO | сержант, младший командир |
+sarge | сержант |
+the sarge | сержант |
+LT | лейтенант | US
+el-tee | лейтенант | US
+looey | лейтенант | US
+drill sergeant | сержант-инструктор |
+boot camp | учебка |
+the brig | гауптвахта |
+the stockade | военная тюрьма |
+mess hall | столовая |
+chow line | очередь за едой |
+KP | наряд на кухню |
+on KP | в наряде по кухне |
+court-martial | военный трибунал |
+dishonorable discharge | позорное увольнение |
+demob | дембель | UK
+demobbed | демобилизован | UK
+civvy street | гражданка | UK
+civvies | гражданская одежда, гражданка |
+on leave | в увольнении, в отпуске |
+furlough | отпуск (воен.) |
+R&R | отдых и восстановление |
+no man's land | ничейная земля |
+foxhole | окоп, ячейка |
+dug-out | блиндаж |
+blighty | Родина, Англия | UK, ПМВ | UK | old
+a blighty one | ранение, с которым отправят домой | | UK | old
+the Hun | гунны (немцы) | | | old
+Kraut | фриц | | | old
+Victor Charlie | вьетконговцы | US
+in-country | во Вьетнаме, в зоне боёв | US
+the World | дом, Америка | US, Вьетнам
+FNG | новичок, салага | US
+cherry | новичок, салага | US воен.
+FUBAR | полный провал, всё к чертям |
+SNAFU | бардак, обычный бардак |
+Roger that | вас понял |
+Wilco | понял, выполняю |
+say again | повторите | радио
+Oscar Mike | выдвигаемся | US
+on me | ко мне, за мной | команда
+on my six | у меня на хвосте (сзади) |
+check your six | проверь тыл |
+six o'clock | сзади |
+twelve o'clock | впереди |
+bogey | неопознанный самолёт |
+bandit | вражеский самолёт |
+tango | противник, цель |
+tangos | противники |
+hostiles | противники |
+friendlies | свои |
+KIA | убит в бою |
+WIA | ранен |
+MIA | пропал без вести |
+POW | военнопленный |
+medevac | медэвакуация |
+corpsman | санитар (морпехи) |
+LZ | зона высадки |
+DZ | зона выброски |
+hot LZ | зона высадки под огнём |
+fire in the hole | ложись! (взрыв) |
+lock and load | заряжай |
+weapons free | огонь на поражение |
+hit the deck | ложись! |
+jarhead | морпех | US
+leatherneck | морпех | US
+swabbie | матрос | US
+flyboy | лётчик |
+zoomie | лётчик | US
+ground pounder | пехота |
+REMF | тыловая крыса | US
+desk jockey | канцелярская крыса |
+pencil pusher | бумагомаратель |
+# --- полиция и криминал ---
+perp | преступник, подозреваемый | US
+the perp | преступник |
+DOA | мёртв по прибытии |
+APB | ориентировка | US
+BOLO | ориентировка | US
+rap sheet | список судимостей, досье |
+a record | судимость |
+priors | прежние судимости |
+MO | почерк (преступника) |
+modus operandi | почерк |
+stakeout | засада, слежка |
+undercover | под прикрытием |
+UC | агент под прикрытием |
+wear a wire | носить прослушку |
+CI | осведомитель |
+snitch | стукач |
+plant evidence | подбросить улики |
+a setup | подстава |
+fall guy | козёл отпущения |
+patsy | козёл отпущения |
+book him | оформляй его |
+pinch | арест |
+bracelets | наручники |
+doing time | мотает срок |
+do time | мотать срок |
+do porridge | мотать срок | UK
+porridge | срок, отсидка | UK
+bird | срок (тюремный) | UK тюремный сленг: «doing bird»
+doing bird | мотает срок | UK
+old lag | старый зэк | UK
+ex-con | бывший зэк |
+jailbird | уголовник |
+parole | условно-досрочное |
+on parole | по УДО |
+PO | надзирающий офицер | US
+make bail | внести залог |
+jump bail | сбежать из-под залога |
+bail bondsman | поручитель |
+cop a plea | признать вину в обмен на смягчение |
+plea bargain | сделка со следствием |
+take the fifth | отказаться от показаний | US
+plead the fifth | воспользоваться правом молчать |
+Miranda | права (зачитать) |
+read sb their rights | зачитать права |
+lawyer up | потребовать адвоката |
+hung jury | присяжные не пришли к решению |
+DA | прокурор |
+banged up | посажен | UK
+pull a job | провернуть дело |
+swag | награбленное |
+heist crew | банда грабителей |
+getaway car | машина для отхода |
+wheelman | водитель (банды) |
+lookout | на шухере |
+case the joint | разведать место |
+mugging | уличный грабёж |
+stick-up | налёт |
+stick 'em up | руки вверх |
+hands up | руки вверх |
+shakedown | вымогательство; обыск |
+racket | рэкет |
+protection money | плата за «крышу» |
+loan shark | ростовщик |
+bookie | букмекер |
+numbers racket | подпольная лотерея |
+hit man | киллер |
+hitman | киллер |
+whack | замочить |
+whacked | замочили |
+bump off | прикончить |
+rub out | убрать |
+take sb for a ride | увезти и убить; обмануть |
+sleep with the fishes | лежать на дне |
+made man | посвящённый (мафия) |
+capo | капо |
+consigliere | консильери |
+the mob | мафия |
+mobster | мафиозо |
+wiseguy | мафиозо |
+gat | пушка, ствол | | | old
+heater | ствол | | | old
+packing | при оружии |
+strapped | при стволе |
+shooter | ствол; стрелок |
+the drop | (get the drop on) застать врасплох |
+get the drop on | взять на мушку первым |
+drive-by | обстрел из машины |
+gangbanger | бандит |
+turf | территория |
+grass | стукач (UK) |
+grass up | настучать |
+nonce | педофил (тюремный сленг) | UK
+blag | ограбление; заболтать | UK
+blagger | грабитель | UK
+tea leaf | вор | рифм. сленг (thief)
+dip | карманник |
+pickpocket | карманник |
+dipper | карманник |
+boost | стащить; угнать |
+carjack | угнать с водителем |
+hotwire | завести без ключа |
+joyride | угнать покататься |
+twocking | угон покататься | UK
+the filth | легавые | UK груб.
+the Yard | Скотленд-Ярд | UK
+CID | уголовный розыск | UK
+DI | инспектор | UK
+DS | сержант-детектив | UK
+DCI | старший инспектор | UK
+guv | шеф (о начальнике) |
+the nick | участок; тюрьма |
+ID parade | опознание |
+mugshot | снимок для дела |
+CSI | криминалисты |
+the ME | судмедэксперт |
+John Doe | неопознанный |
+Jane Doe | неопознанная |
+# --- медицина ---
+crash cart | реанимационная тележка |
+flatline | остановка сердца, прямая на мониторе |
+flatlining | сердце остановилось |
+BP | давление |
+OR | операционная |
+ER | приёмный покой, неотложка |
+ICU | реанимация |
+scrub in | готовиться к операции |
+DNR | не реанимировать |
+O neg | первая отрицательная (кровь) |
+# --- офис, бизнес ---
+ballpark | приблизительно |
+loop sb in | держать в курсе |
+in the loop | в курсе |
+out of the loop | не в курсе |
+think outside the box | мыслить нестандартно |
+low-hanging fruit | лёгкая добыча |
+pink slip | уведомление об увольнении | US
+golden handshake | выходное пособие |
+golden parachute | золотой парашют |
+the rat race | гонка, суета |
+graveyard shift | ночная смена |
+redundant | сокращён | UK: «made redundant»
+made redundant | сокращён | UK
+situations vacant | вакансии | UK
+# --- море и авиация ---
+the old man | капитан; батя |
+aye aye | есть! |
+aye aye, sir | есть, сэр! |
+all hands | свистать всех |
+all hands on deck | свистать всех наверх |
+man overboard | человек за бортом |
+abandon ship | покинуть судно |
+shiver me timbers | разрази меня гром | пират.

@@ -1,0 +1,923 @@
+# Устойчивые выражения и идиомы — то, что нельзя переводить дословно.
+#@ region=* era=*
+kick the bucket | сыграть в ящик |
+bite the dust | загнуться, отбросить коньки |
+pushing up daisies | в могиле, кормит червей |
+six feet under | в могиле |
+buy the farm | погибнуть | US, воен.
+cash in one's chips | отдать концы |
+give up the ghost | испустить дух; сломаться |
+croak | откинуть копыта |
+snuff it | окочуриться | UK
+pop one's clogs | откинуть копыта | UK
+break a leg | ни пуха ни пера |
+it's raining cats and dogs | льёт как из ведра |
+raining cats and dogs | льёт как из ведра |
+piece of cake | проще простого |
+a piece of piss | раз плюнуть | UK, груб.
+under the weather | приболел, неважно себя чувствует |
+feel under the weather | неважно себя чувствовать |
+right as rain | в полном порядке |
+fit as a fiddle | здоров как бык |
+cost an arm and a leg | стоить целое состояние |
+once in a blue moon | раз в сто лет |
+let the cat out of the bag | проболтаться |
+the cat's out of the bag | тайное стало явным |
+spill the beans | проболтаться |
+beat around the bush | ходить вокруг да около |
+beat about the bush | ходить вокруг да около |
+cut to the chase | перейти к делу |
+get to the point | перейти к сути |
+hit the nail on the head | попасть в точку |
+bark up the wrong tree | обращаться не по адресу, ошибаться |
+barking up the wrong tree | не по адресу, ошибаешься |
+the ball is in your court | теперь твой ход |
+ball's in your court | твой ход |
+on the ball | соображает, начеку |
+drop the ball | облажаться, упустить |
+have a ball | отлично повеселиться |
+get the ball rolling | начать дело |
+keep the ball rolling | не сбавлять темп |
+play ball | сотрудничать, подыгрывать |
+a whole new ball game | совсем другое дело |
+ballpark figure | примерная цифра |
+in the ballpark | примерно, близко |
+out of left field | ни с того ни с сего | US
+step up to the plate | взять ответственность | US
+cover all the bases | предусмотреть всё |
+off base | ошибаешься | US
+get to first base | продвинуться (с девушкой); начать | US
+when pigs fly | когда рак на горе свистнет |
+pigs might fly | рак на горе свистнет | UK
+not a chance in hell | ни единого шанса |
+over my dead body | только через мой труп |
+not in a million years | ни за что на свете |
+the last straw | последняя капля |
+the straw that broke the camel's back | последняя капля |
+a drop in the ocean | капля в море |
+a drop in the bucket | капля в море |
+add insult to injury | ко всему прочему, вдобавок |
+adding insult to injury | мало того |
+burn the midnight oil | засиживаться допоздна |
+burn bridges | сжигать мосты |
+cross that bridge when we come to it | будем решать проблемы по мере поступления |
+water under the bridge | что было, то прошло |
+don't count your chickens | не говори гоп |
+count one's chickens before they hatch | делить шкуру неубитого медведя |
+kill two birds with one stone | убить двух зайцев |
+the early bird catches the worm | кто рано встаёт, тому бог подаёт |
+early bird | ранняя пташка |
+birds of a feather | одного поля ягоды |
+a little bird told me | сорока на хвосте принесла |
+eat crow | признать ошибку, унизиться | US
+eat humble pie | признать свою неправоту |
+eat one's words | взять свои слова назад |
+I'll eat my hat | голову даю на отсечение |
+bite off more than one can chew | взвалить на себя непосильное |
+bite the bullet | стиснуть зубы |
+bite one's tongue | прикусить язык |
+bite sb's head off | наорать, огрызнуться |
+bite the hand that feeds | кусать руку, которая кормит |
+cold feet | струсить, передумать | «get cold feet»
+get cold feet | сдрейфить |
+cold shoulder | холодный приём |
+give sb the cold shoulder | игнорировать |
+cold turkey | резко бросить; ломка |
+go cold turkey | бросить резко |
+talk turkey | говорить по делу | US
+in cold blood | хладнокровно |
+blood is thicker than water | родная кровь не водица |
+bad blood | вражда |
+make sb's blood boil | бесить |
+in hot water | в беде, в переплёте |
+get into hot water | влипнуть |
+in deep water | в глубокой заднице |
+in a pickle | в переплёте |
+in a jam | в переделке |
+in a fix | в затруднении |
+in a spot | в затруднении |
+in a bit of a spot | в затруднительном положении |
+up the creek | в заднице |
+up shit creek | по уши в дерьме |
+up the creek without a paddle | в полной заднице |
+between a rock and a hard place | между молотом и наковальней |
+between the devil and the deep blue sea | между двух огней |
+caught red-handed | пойман с поличным |
+catch sb red-handed | поймать с поличным |
+caught with one's pants down | застали врасплох |
+caught with one's trousers down | застали врасплох | UK
+with one's hand in the till | с поличным (при краже) |
+red tape | бюрократия, волокита |
+red herring | ложный след |
+paint the town red | загулять |
+see red | прийти в ярость |
+in the red | в долгах, в минусе |
+in the black | в плюсе |
+red-letter day | праздник, знаменательный день |
+roll out the red carpet | встретить по высшему разряду |
+black sheep | паршивая овца |
+white lie | невинная ложь |
+white elephant | обуза |
+in black and white | чёрным по белому |
+green with envy | позеленел от зависти |
+green-eyed monster | ревность |
+greenhorn | новичок |
+green light | добро, зелёный свет |
+give the green light | дать добро |
+feel blue | грустить |
+out of the blue | как гром среди ясного неба |
+once in a blue moon | раз в сто лет |
+blue blood | голубая кровь |
+till you're blue in the face | хоть до посинения |
+yellow | трус | «you're yellow» — трус
+yellow-bellied | трусливый |
+lily-livered | трусливый |
+chicken | трус; струсить | «chicken out»
+chicken out | струсить |
+play chicken | играть, кто первый струсит |
+scaredy-cat | трусишка |
+fraidy-cat | трусишка |
+cry wolf | поднимать ложную тревогу |
+wolf in sheep's clothing | волк в овечьей шкуре |
+let sleeping dogs lie | не буди лихо |
+dog-eat-dog | волчьи законы |
+it's a dog's life | собачья жизнь |
+sick as a dog | плохо, тошнит |
+sick as a parrot | расстроен (UK, футб.) | UK
+dog tired | смертельно устал |
+work like a dog | вкалывать |
+in the doghouse | в немилости |
+top dog | главный |
+underdog | аутсайдер |
+hair of the dog | опохмел |
+every dog has its day | будет и на нашей улице праздник |
+let the dog see the rabbit | дай посмотреть | UK
+the elephant in the room | неудобная тема, о которой молчат |
+an elephant never forgets | у него слоновья память |
+like a bull in a china shop | как слон в посудной лавке |
+take the bull by the horns | взять быка за рога |
+hold one's horses | придержать коней |
+straight from the horse's mouth | из первых рук |
+don't look a gift horse in the mouth | дарёному коню в зубы не смотрят |
+put the cart before the horse | ставить телегу впереди лошади |
+flog a dead horse | заниматься бесполезным |
+beat a dead horse | толочь воду в ступе |
+dark horse | тёмная лошадка |
+on one's high horse | задирает нос |
+get off one's high horse | спуститься с небес |
+horse around | дурачиться |
+horsing around | дурачатся |
+monkey business | проделки, махинации |
+monkey around | дурачиться |
+monkey about | валять дурака |
+monkey see, monkey do | обезьянничать |
+make a monkey out of sb | выставить дураком |
+smell a rat | почуять неладное |
+like a drowned rat | промокший до нитки |
+drowned rat | мокрый как мышь, промок до нитки | о промокшем человеке
+rat race | мышиная возня, гонка за успехом |
+like rats leaving a sinking ship | как крысы с тонущего корабля |
+cat got your tongue | язык проглотил? |
+curiosity killed the cat | любопытной Варваре нос оторвали |
+no room to swing a cat | яблоку негде упасть |
+like a cat on a hot tin roof | как на иголках |
+like a cat on hot bricks | как на иголках | UK
+the cat's whiskers | высший класс |
+the cat's pajamas | высший класс | US | old
+the cat's meow | высший класс | US | old
+fat cat | толстосум |
+copycat | подражатель |
+look what the cat dragged in | гляньте, кто явился |
+put the cat among the pigeons | поднять переполох | UK
+fish out of water | не в своей тарелке |
+a fish out of water | не в своей тарелке |
+other fish to fry | есть дела поважнее |
+bigger fish to fry | дела поважнее |
+plenty more fish in the sea | на нём свет клином не сошёлся |
+there are plenty of fish in the sea | свет клином не сошёлся |
+a cold fish | бездушный, холодный человек |
+a big fish in a small pond | первый парень на деревне |
+like shooting fish in a barrel | раз плюнуть |
+neither fish nor fowl | ни рыба ни мясо |
+packed like sardines | битком набиты |
+the world is one's oyster | весь мир у твоих ног |
+butterflies in one's stomach | мандраж |
+have butterflies | волноваться, мандраж |
+busy as a bee | как белка в колесе |
+bee in one's bonnet | заскок, навязчивая идея |
+the bee's knees | высший класс |
+make a beeline | направиться прямиком |
+a bird in the hand | лучше синица в руках |
+a bird's-eye view | вид с высоты птичьего полёта |
+for the birds | ерунда, никуда не годится |
+eagle-eyed | зоркий |
+lame duck | неудачник; уходящий политик |
+sitting duck | лёгкая мишень |
+like water off a duck's back | как с гуся вода |
+get one's ducks in a row | подготовиться, навести порядок |
+ugly duckling | гадкий утёнок |
+chicken feed | гроши |
+a chicken-and-egg situation | что первично — курица или яйцо |
+go to bed with the chickens | ложиться с курами |
+the goose that lays the golden eggs | курица, несущая золотые яйца |
+cook sb's goose | погубить, расправиться |
+one's goose is cooked | ему конец |
+wild goose chase | бессмысленные поиски |
+a wild-goose chase | погоня за призраком |
+gone to the dogs | пошёл псу под хвост |
+raining on sb's parade | испортить праздник |
+rain on sb's parade | испортить праздник |
+take a rain check | перенести на потом |
+rain check | в другой раз |
+come rain or shine | при любой погоде, в любом случае |
+steal sb's thunder | перехватить славу |
+storm in a teacup | буря в стакане воды |
+calm before the storm | затишье перед бурей |
+weather the storm | переждать бурю, выстоять |
+break the ice | растопить лёд |
+on thin ice | на тонком льду |
+the tip of the iceberg | верхушка айсберга |
+put on ice | отложить |
+snowed under | завален работой |
+a snowball's chance in hell | ни единого шанса |
+when hell freezes over | когда рак на горе свистнет |
+all hell broke loose | начался сущий ад |
+hell for leather | во весь опор |
+hell of a | чертовски | «a hell of a guy» — отличный парень
+one hell of a | охрененный |
+like hell | чёрта с два; чертовски | по контексту
+the hell with it | к чёрту! |
+to hell with it | да пошло оно! |
+give sb hell | устроить разнос |
+raise hell | устроить скандал |
+hell to pay | будет скандал, не поздоровится |
+there'll be hell to pay | нам не поздоровится |
+go to hell | пошёл к чёрту |
+speak of the devil | лёгок на помине |
+talk of the devil | лёгок на помине |
+better the devil you know | лучше знакомое зло |
+the devil is in the details | дьявол в мелочах |
+play devil's advocate | играть роль адвоката дьявола |
+lucky devil | везунчик |
+poor devil | бедолага |
+give the devil his due | отдать должное |
+what the devil | какого чёрта |
+as luck would have it | как назло; к счастью |
+beginner's luck | новичкам везёт |
+push one's luck | испытывать судьбу |
+don't push your luck | не испытывай судьбу |
+down on one's luck | невезение, полоса неудач |
+tough luck | не повезло |
+hard luck | не повезло |
+no such luck | увы, нет |
+better luck next time | повезёт в следующий раз |
+knock on wood | постучи по дереву, тьфу-тьфу | US
+touch wood | тьфу-тьфу, чтобы не сглазить | UK
+fingers crossed | скрестим пальцы |
+keep one's fingers crossed | держать кулаки |
+break one's neck | из кожи вон лезть; свернуть шею |
+neck and neck | ноздря в ноздрю |
+a pain in the neck | заноза |
+stick one's neck out | рисковать головой |
+up to one's neck | по уши (в долгах, в работе) |
+breathe down sb's neck | стоять над душой |
+get it in the neck | получить по шее |
+a millstone round one's neck | камень на шее |
+head over heels | по уши (влюблён) |
+head over heels in love | по уши влюблён |
+off the top of one's head | навскидку |
+bury one's head in the sand | прятать голову в песок |
+keep one's head above water | держаться на плаву |
+lose one's head | потерять голову |
+keep one's head | не терять голову |
+over one's head | выше понимания |
+in over one's head | влип, не справляется |
+a head start | фора |
+heads will roll | полетят головы |
+can't make head or tail of | ничего не понимаю |
+hit the roof | взбеситься |
+go through the roof | взлететь (о ценах); взбеситься |
+raise the roof | поднять шум |
+a roof over one's head | крыша над головой |
+through the roof | до небес |
+put one's foot in it | ляпнуть, сесть в лужу |
+put one's foot in one's mouth | ляпнуть |
+put one's foot down | твёрдо настоять |
+put one's best foot forward | показать себя с лучшей стороны |
+get off on the wrong foot | неудачно начать |
+get one's foot in the door | зацепиться |
+have one foot in the grave | одной ногой в могиле |
+the shoe is on the other foot | всё наоборот |
+the boot is on the other foot | роли поменялись | UK
+foot the bill | оплатить счёт |
+shoot oneself in the foot | навредить самому себе |
+cold feet | страх, сомнения |
+find one's feet | освоиться |
+stand on one's own two feet | стоять на своих ногах |
+sweep sb off one's feet | вскружить голову |
+drag one's feet | тянуть резину |
+under one's feet | под ногами (мешаться) |
+pull sb's leg | разыгрывать |
+not have a leg to stand on | нечем крыть |
+cost an arm and a leg | стоить уйму денег |
+give one's right arm | отдать всё на свете |
+twist sb's arm | уговорить, выкрутить руки |
+at arm's length | на расстоянии |
+up in arms | в негодовании |
+with open arms | с распростёртыми объятиями |
+elbow grease | усилия, попотеть | «put some elbow grease into it» — поднапрягись
+elbow room | простор |
+rub elbows | общаться, тереться среди |
+give sb the elbow | дать отставку, бросить | UK
+rule of thumb | эмпирическое правило |
+all thumbs | криворукий |
+under sb's thumb | под каблуком |
+thumbs up | одобрение |
+twiddle one's thumbs | бить баклуши |
+stick out like a sore thumb | бросаться в глаза |
+green fingers | лёгкая рука (садовника) | UK
+green thumb | лёгкая рука (садовника) | US
+butterfingers | растяпа |
+lay a finger on | тронуть пальцем |
+not lift a finger | палец о палец не ударить |
+point the finger | обвинять |
+work one's fingers to the bone | работать не покладая рук |
+have a finger in every pie | всюду совать нос |
+slip through one's fingers | упустить |
+have sth at one's fingertips | знать назубок |
+by the skin of one's teeth | чудом, еле-еле |
+lie through one's teeth | нагло врать |
+fed up to the back teeth | сыт по горло | UK
+armed to the teeth | вооружён до зубов |
+sink one's teeth into | вгрызться |
+long in the tooth | старый, в годах |
+sweet tooth | сладкоежка |
+tooth and nail | изо всех сил |
+fight tooth and nail | драться не на жизнь, а на смерть |
+by word of mouth | из уст в уста |
+down in the mouth | понурый |
+shoot one's mouth off | болтать лишнее |
+a big mouth | болтун, трепло |
+mouth off | хамить, трепаться |
+leave a bad taste in one's mouth | оставить неприятный осадок |
+take the words out of sb's mouth | сказать то, что я хотел |
+keep one's mouth shut | держать язык за зубами |
+hold one's tongue | придержать язык |
+a slip of the tongue | оговорка |
+tongue-in-cheek | в шутку |
+on the tip of one's tongue | вертится на языке |
+cat got your tongue | что, язык проглотил? |
+mind your tongue | следи за языком |
+watch your mouth | следи за языком |
+watch your language | следи за выражениями |
+turn a blind eye | закрыть глаза |
+see eye to eye | сходиться во мнениях |
+keep an eye on | присмотреть |
+keep an eye out | смотреть в оба |
+an eye for an eye | око за око |
+the apple of one's eye | зеница ока |
+more than meets the eye | не так просто, как кажется |
+in the blink of an eye | в мгновение ока |
+in the twinkling of an eye | в мгновение ока |
+up to one's eyes | по уши (в работе) |
+my eye | вздор! как же! | UK | old
+bob's your uncle | и дело в шляпе | UK
+cross one's heart | честное слово |
+cross my heart and hope to die | клянусь |
+hand on heart | положа руку на сердце |
+by heart | наизусть |
+learn by heart | выучить наизусть |
+have a heart | имей совесть, сжалься |
+have a heart of gold | золотое сердце |
+take to heart | принять близко к сердцу |
+heart-to-heart | разговор по душам |
+wear one's heart on one's sleeve | душа нараспашку |
+my heart bleeds | ах, как жаль (ирон.) |
+heart in one's mouth | сердце в пятки |
+cry one's heart out | выплакаться |
+eat one's heart out | изводиться; обзавидуйся |
+do sb's heart good | радовать сердце |
+get sth off one's chest | облегчить душу |
+keep one's cards close to one's chest | держать карты при себе |
+play one's cards right | правильно разыграть карты |
+lay one's cards on the table | раскрыть карты |
+put one's cards on the table | выложить карты на стол |
+on the cards | вероятно, вполне возможно | UK
+in the cards | вероятно | US
+house of cards | карточный домик |
+the joker in the pack | тёмная лошадка |
+call sb's bluff | вывести на чистую воду |
+poker face | невозмутимое лицо |
+up the ante | поднять ставки |
+ace up one's sleeve | козырь в рукаве |
+hold all the aces | иметь все козыри |
+pass the buck | перекладывать ответственность |
+the buck stops here | вся ответственность на мне |
+pay through the nose | переплатить |
+on the nose | точно |
+keep one's nose clean | не лезть в неприятности |
+nose to the grindstone | вкалывать |
+under one's nose | под носом |
+look down one's nose | смотреть свысока |
+poke one's nose | совать нос |
+rub sb's nose in it | тыкать носом |
+follow one's nose | идти прямо; по чутью |
+turn up one's nose | воротить нос |
+cut off one's nose to spite one's face | назло маме отморожу уши |
+a nosy parker | любопытная Варвара | UK
+it's no skin off my nose | мне-то что |
+no skin off my back | мне без разницы |
+get under sb's skin | достать, задеть |
+jump out of one's skin | подпрыгнуть от испуга |
+thick-skinned | толстокожий |
+save one's skin | спасти свою шкуру |
+skin and bone | кожа да кости |
+by the skin of one's teeth | на волосок |
+let one's hair down | расслабиться |
+keep your hair on | не кипятись | UK
+hair-raising | жуткий |
+by a hair's breadth | на волосок |
+split hairs | придираться к мелочам |
+make sb's hair stand on end | волосы дыбом |
+not turn a hair | бровью не повести |
+get in sb's hair | достать |
+a bad hair day | всё наперекосяк, невезучий день |
+by the seat of one's pants | наобум, на интуиции |
+wear the trousers | быть главным в семье | UK
+wear the pants | быть главным в семье | US
+keep one's pants on | не кипятись |
+beat the pants off | разгромить |
+scare the pants off | напугать до смерти |
+bore the pants off | замучить скукой |
+too big for one's boots | зазнался | UK
+too big for one's britches | зазнался | US
+die with one's boots on | умереть на посту |
+lick sb's boots | лизать сапоги |
+quake in one's boots | трястись от страха |
+shaking in one's boots | трясётся от страха |
+put the boot in | добить лежачего; пнуть | UK
+get the boot | быть уволенным |
+give sb the boot | выгнать |
+give sb the sack | уволить |
+get the sack | быть уволенным |
+hit the sack | лечь спать |
+lay off it | отстань, хватит |
+hand in one's notice | подать заявление об уходе |
+in the same boat | в одной лодке |
+rock the boat | раскачивать лодку |
+miss the boat | упустить шанс |
+burn one's boats | сжечь мосты | UK
+push the boat out | не скупиться, шикануть | UK
+float one's boat | нравиться | «whatever floats your boat»
+whatever floats your boat | кому что нравится |
+the ship has sailed | поезд ушёл |
+shipshape | в полном порядке |
+loose cannon | неуправляемый человек |
+show sb the ropes | ввести в курс дела |
+learn the ropes | освоиться |
+on the ropes | на грани поражения |
+batten down the hatches | готовиться к худшему |
+down the hatch | до дна! | тост
+by and large | в целом |
+all at sea | в полной растерянности |
+any port in a storm | в беде любая помощь сгодится |
+three sheets to the wind | в стельку пьян |
+plain sailing | как по маслу |
+smooth sailing | без сучка без задоринки |
+the coast is clear | путь свободен |
+a long shot | маловероятно, без шансов |
+not by a long shot | отнюдь нет |
+a shot in the dark | наугад |
+call the shots | командовать |
+give it a shot | попробовать |
+have a shot at | попробовать |
+have a go | попробовать |
+have a go at | попробовать; наехать, накинуться | по контексту
+give it a go | попробовать |
+give it a whirl | попробовать |
+take a stab at | попытаться |
+a shot in the arm | стимул, встряска |
+jump the gun | поспешить |
+stick to one's guns | стоять на своём |
+son of a gun | сукин сын (добродуш.) |
+smoking gun | неопровержимая улика |
+bite the bullet | стиснуть зубы |
+dodge a bullet | избежать беды |
+sweat bullets | обливаться потом от страха |
+bite the hand that feeds you | неблагодарность |
+out of the frying pan into the fire | из огня да в полымя |
+too many cooks spoil the broth | у семи нянек дитя без глазу |
+a recipe for disaster | верный путь к катастрофе |
+the proof of the pudding | проверено на практике |
+half a loaf is better than none | лучше синица в руках |
+the best thing since sliced bread | лучшее изобретение |
+bread and butter | хлеб насущный, основной заработок |
+know which side one's bread is buttered | знать, где выгода |
+butter sb up | подлизываться |
+butter wouldn't melt in sb's mouth | тихоня, невинная овечка |
+cry over spilt milk | горевать о том, что уже не вернуть |
+no use crying over spilt milk | что сделано, то сделано |
+the cream of the crop | сливки, лучшие |
+a bad egg | негодяй |
+a good egg | хороший парень | | | old
+egg on one's face | опозориться |
+walk on eggshells | ходить на цыпочках |
+put all one's eggs in one basket | ставить всё на одну карту |
+as easy as pie | проще простого |
+pie in the sky | журавль в небе |
+eat humble pie | признать неправоту |
+a finger in every pie | везде сунет нос |
+sell like hot cakes | раскупаться как горячие пирожки |
+the icing on the cake | вишенка на торте |
+have one's cake and eat it | и рыбку съесть, и в пруд не лезть |
+a hard nut to crack | крепкий орешек |
+in a nutshell | в двух словах |
+go nuts | сходить с ума |
+nuts about | без ума от |
+off one's nut | спятил | UK
+use one's noodle | шевели мозгами |
+use one's head | подумай головой |
+a bad apple | паршивая овца |
+apples and oranges | разные вещи |
+compare apples and oranges | сравнивать несравнимое |
+the Big Apple | Нью-Йорк |
+upset the apple cart | спутать все карты |
+couch potato | лежебока |
+hot potato | щекотливый вопрос |
+small potatoes | мелочь, ерунда |
+cool as a cucumber | невозмутимый |
+full of beans | полон энергии |
+not worth a hill of beans | гроша ломаного не стоит |
+spill the beans | проболтаться |
+know beans about | ни черта не смыслит в |
+a bun in the oven | ребёнок на подходе |
+in a stew | в волнении |
+stew in one's own juice | вариться в собственном соку |
+take sth with a grain of salt | относиться скептически |
+take sth with a pinch of salt | относиться с недоверием | UK
+worth one's salt | толковый |
+rub salt in the wound | сыпать соль на рану |
+the salt of the earth | соль земли |
+bring home the bacon | приносить деньги в дом |
+save one's bacon | спасти шкуру |
+not my cup of tea | не по мне |
+a storm in a teacup | буря в стакане воды |
+not for all the tea in China | ни за какие коврижки |
+tea and sympathy | утешение |
+spill the tea | выкладывай сплетни | | | modern
+sour grapes | зелен виноград |
+in a jam | в переделке |
+a lemon | брак, неудачная покупка | о машине
+cheesy | пошлый, банальный |
+say cheese | скажите «сыр» (улыбочку!) |
+big cheese | большая шишка |
+cut the mustard | соответствовать |
+not cut the mustard | не тянет |
+the whole enchilada | всё целиком | US
+the whole shebang | всё вместе |
+the whole kit and caboodle | всё скопом |
+the whole nine yards | по полной программе | US
+lock, stock and barrel | целиком и полностью |
+hook, line and sinker | безоговорочно (поверить) |
+fall for it hook, line and sinker | купиться на всё |
+by hook or by crook | любой ценой |
+the real McCoy | настоящий, без подделки |
+the full monty | по полной программе; догола | UK
+all the trimmings | со всем полагающимся |
+the bee's knees | высший класс |
+the dog's bollocks | охрененно круто | UK, груб.
+the mutt's nuts | охренительно | UK, груб.
+off the hook | соскочил, отвертелся |
+let sb off the hook | отпустить, простить |
+on tenterhooks | как на иголках |
+on pins and needles | как на иголках |
+on edge | на взводе |
+on the edge of one's seat | затаив дыхание |
+edgy | нервный |
+on the fence | колеблется |
+sit on the fence | не занимать позицию |
+on the mend | идёт на поправку |
+on the house | за счёт заведения |
+on the rocks | со льдом; на грани краха | по контексту
+on the dot | минута в минуту |
+on the spot | на месте; сразу |
+put sb on the spot | поставить в неловкое положение |
+on the go | на ногах, в делах |
+on the make | ищет выгоду; ищет, с кем переспать |
+on the side | на стороне; в качестве гарнира |
+a bit on the side | любовник/любовница | UK
+on the sly | тайком |
+on the quiet | втихую |
+on the q.t. | втихаря |
+on the blink | барахлит |
+on the fritz | сломался, барахлит | US
+on the cards | вероятно |
+on the warpath | рвёт и мечет |
+on cloud nine | на седьмом небе |
+over the moon | вне себя от счастья |
+over the hill | уже немолод |
+OTT | перебор | UK
+go over the top | перегнуть палку; пойти в атаку |
+under the table | под столом; из-под полы |
+under the counter | из-под полы |
+under wraps | в секрете |
+under the radar | незаметно |
+under fire | под огнём (критики) |
+below the belt | ниже пояса, нечестно |
+hit below the belt | ударить ниже пояса |
+tighten one's belt | затянуть пояс |
+under one's belt | за плечами |
+behind bars | за решёткой |
+behind sb's back | за спиной |
+back to square one | назад к исходной точке |
+back to the drawing board | придётся начинать заново |
+back in the day | в былые времена |
+watch one's back | беречься |
+I've got your back | я тебя прикрою |
+got your back | прикрою |
+get off my back | отстань от меня |
+get sb's back up | разозлить |
+put one's back into it | поднапрячься |
+break one's back | надрываться |
+back down | отступить |
+back off | отвали, отстань |
+back out | отказаться |
+see the back of | избавиться от | «glad to see the back of him»
+a pat on the back | похвала |
+you scratch my back and I'll scratch yours | рука руку моет |
+like the back of one's hand | как свои пять пальцев |
+know sth like the back of one's hand | знать как свои пять пальцев |
+off the cuff | экспромтом |
+up one's sleeve | в рукаве, про запас |
+roll up one's sleeves | засучить рукава |
+laugh up one's sleeve | смеяться исподтишка |
+keep sth under one's hat | держать в секрете |
+at the drop of a hat | по первому слову |
+hats off to | снимаю шляпу перед |
+old hat | старо, банально |
+I'll eat my hat | голову на отсечение |
+talk through one's hat | нести чушь |
+hang up one's hat | уйти на покой |
+a feather in one's cap | повод для гордости |
+if the cap fits | на воре и шапка горит | UK
+if the shoe fits | на воре шапка горит | US
+put oneself in sb's shoes | поставить себя на чьё-то место |
+fill sb's shoes | заменить кого-то |
+step into sb's shoes | занять чьё-то место |
+wait for the other shoe to drop | ждать развязки |
+on a shoestring | на копейки |
+pull one's socks up | взяться за ум | UK
+knock sb's socks off | сразить наповал |
+put a sock in it | заткнись |
+fly off the handle | вспылить |
+lose one's temper | выйти из себя |
+lose one's cool | вспылить |
+keep one's cool | сохранять спокойствие |
+blow one's top | взорваться |
+blow one's stack | взорваться | US
+blow off steam | выпустить пар |
+let off steam | выпустить пар |
+blow one's cover | раскрыть себя |
+blow it | облажаться |
+blow the whistle | поднять тревогу; донести |
+blow hot and cold | то так, то сяк |
+blow sb away | поразить; пристрелить | по контексту
+blow me down | ну и ну! | UK | old
+well, blow me | вот это да | UK | old
+there she blows | вот она! (клич китобоев: кит!) | шутл. «вот и началось»
+blow a gasket | взбеситься |
+go off the deep end | психануть |
+go to pieces | расклеиться |
+fall apart | развалиться, расклеиться |
+pull oneself together | взять себя в руки |
+get one's act together | взяться за ум |
+get a grip | возьми себя в руки |
+keep one's chin up | не вешать нос |
+chin up | выше нос |
+keep a stiff upper lip | не подавать виду |
+take it on the chin | стойко принять удар |
+lick one's wounds | зализывать раны |
+throw in the towel | сдаться |
+throw in the sponge | сдаться |
+throw the book at sb | наказать по полной |
+throw a spanner in the works | вставлять палки в колёса | UK
+throw a wrench in the works | вставлять палки в колёса | US
+throw caution to the wind | отбросить осторожность |
+throw sb under the bus | подставить, пожертвовать кем-то |
+throw a fit | закатить истерику |
+throw a tantrum | закатить истерику |
+throw a party | устроить вечеринку |
+throw a punch | ударить |
+throw one's weight around | командовать, давить |
+throw shade | язвить, критиковать | | | modern
+a stone's throw | рукой подать |
+leave no stone unturned | перевернуть всё вверх дном |
+set in stone | высечено в камне, окончательно |
+kill time | убить время |
+in the nick of time | в последний момент |
+time flies | время летит |
+behind the times | отстал от жизни |
+about time | давно пора |
+it's about time | давно пора |
+high time | давно пора |
+have the time of one's life | оторваться по полной |
+in no time | в два счёта |
+time and again | снова и снова |
+make up for lost time | наверстать упущенное |
+for the time being | пока что |
+call it a day | закончить на сегодня |
+call it a night | закругляться (вечером) |
+let's call it a day | на сегодня хватит |
+at the end of the day | в конечном счёте |
+day in, day out | изо дня в день |
+it's not my day | не мой день |
+make sb's day | обрадовать |
+make my day | ну давай, порадуй меня |
+those were the days | вот были времена |
+the other day | на днях |
+one of these days | на днях; однажды |
+one of these fine days | в один прекрасный день |
+any day now | со дня на день |
+it's early days | ещё рано судить | UK
+save for a rainy day | откладывать на чёрный день |
+night owl | сова (о человеке) |
+a night on the town | вечер кутежа |
+burn the candle at both ends | работать на износ |
+can't hold a candle to | в подмётки не годится |
+the game is up | игра окончена, вы раскрыты |
+the jig is up | всё, попался |
+the game's up | ты раскрыт |
+fair game | законная добыча |
+I'm game | я в деле |
+are you game | ты в деле? |
+ahead of the game | впереди всех |
+two can play at that game | я тоже так умею |
+what's your game | что ты задумал? |
+a level playing field | равные условия |
+move the goalposts | менять правила по ходу |
+an own goal | гол в свои ворота |
+a hat-trick | три удачи подряд |
+saved by the bell | спасён звонком |
+throw in the towel | сдаться |
+down for the count | в нокауте |
+out for the count | в отключке |
+on the ropes | на грани поражения |
+seconds out | бокс! (команда судьи на ринге) | бокс; секунданты покидают ринг
+seconds out, round one | первый раунд, бокс! | бокс
+pull one's punches | действовать вполсилы |
+roll with the punches | держать удар |
+beat sb to the punch | опередить |
+punch above one's weight | замахнуться не по силам |
+throw one's hat in the ring | вступить в борьбу |
+in sb's corner | на чьей-то стороне |
+a low blow | удар ниже пояса |
+a sucker punch | подлый удар |
+take a dive | лечь (специально проиграть) |
+throw a fight | сдать бой |
+the final whistle | финальный свисток |
+blow the whistle on | заложить, разоблачить |
+par for the course | обычное дело |
+below par | не в форме |
+up to par | на должном уровне |
+hole in one | с первого удара |
+the home stretch | финишная прямая |
+neck and neck | ноздря в ноздрю |
+a close shave | был на волосок |
+a near miss | был на волосок |
+the last minute | последний момент |
+the eleventh hour | в последний момент |
+at the eleventh hour | в последний момент |
+in the long run | в конечном счёте |
+in the short run | в ближайшем будущем |
+run of the mill | заурядный |
+run-of-the-mill | обычный |
+give sb a run for their money | составить серьёзную конкуренцию |
+cut and run | смыться |
+make a run for it | броситься бежать |
+run the show | заправлять |
+run sb ragged | загонять |
+run out of steam | выдохнуться |
+run a tight ship | держать всё в ежовых рукавицах |
+cut corners | халтурить, экономить на всём |
+cut it fine | впритык | UK
+cut it close | впритык | US
+cut sb dead | не замечать, игнорировать |
+cut no ice | не производить впечатления |
+cut sb down to size | поставить на место |
+cut one's losses | вовремя остановиться |
+not cut out for | не создан для |
+a cut above | на голову выше |
+cut the crap | хватит болтать, к делу |
+cut sb in | взять в долю |
+cut up rough | разбушеваться | UK
+cutting it fine | впритык |
+the short end of the stick | худшая доля |
+get the wrong end of the stick | неправильно понять | UK
+stick in the mud | ретроград, зануда |
+stick one's oar in | влезать | UK
+stick around | побудь, не уходи |
+stick up for | заступиться |
+stick with it | не сдавайся |
+stick it out | вытерпеть |
+stick it to sb | насолить, проучить |
+stuck up | заносчивый |
+stuck-up | заносчивый |
+get stuck in | налегай, приступай | UK
+make it stick | закрепить, доказать (обвинение) |
+up a gum tree | в затруднении | UK
+up to no good | замышляет недоброе |
+up to scratch | на должном уровне |
+start from scratch | начать с нуля |
+up for it | готов, хочет |
+up for grabs | доступно, бери кто хочет |
+up in the air | в подвешенном состоянии |
+up and about | на ногах (после болезни) |
+up the wall | на взводе, бесит | «drives me up the wall»
+drive sb up the wall | доводить до белого каления |
+drive sb round the bend | сводить с ума | UK
+drive sb nuts | сводить с ума |
+drive sb crazy | бесить |
+it's all Greek to me | для меня это китайская грамота |
+double Dutch | тарабарщина | UK
+Dutch courage | храбрость во хмелю |
+go Dutch | платить каждый за себя |
+pardon my French | извините за мой французский |
+French leave | уйти не попрощавшись |
+take French leave | уйти по-английски |
+Chinese whispers | испорченный телефон | UK
+a Mexican standoff | патовая ситуация |
+Indian summer | бабье лето |
+Bob's your uncle | и дело в шляпе |
+Uncle Tom Cobley and all | и все кому не лень | UK
+every Tom, Dick and Harry | каждый встречный |
+keep up with the Joneses | не отставать от соседей |
+Jack of all trades | мастер на все руки |
+Jack the lad | ухарь, хват | UK
+you don't know Jack | ни черта не знаешь | US
+hit the road, Jack | проваливай |
+a Peeping Tom | соглядатай |
+doubting Thomas | Фома неверующий |
+a smart Alec | умник |
+a nosy Parker | любопытная Варвара |
+a Jekyll and Hyde | двуликий |
+the Grim Reaper | смерть с косой |
+Father Time | старик-время, «старец» | ирон. о том, кто строит из себя старшего
+hark at | ишь ты, послушайте-ка его | UK, ирон.
+hark at him | ишь, как заговорил | UK, ирон.
+listen to him | вы только послушайте | ирон.
+Mr Right | тот самый, суженый |
+Mr. Right | тот самый |
+Prince Charming | принц на белом коне |
+a dark horse | тёмная лошадка |
+a sore loser | плохо проигрывает |
+a wet blanket | зануда, портит веселье |
+a party pooper | зануда, портит праздник |
+a killjoy | зануда |
+a stick-in-the-mud | зануда |
+a busybody | всюду суёт нос |
+a know-all | всезнайка | UK
+a pain in the neck | заноза |
+a man of his word | человек слова |
+a man of few words | немногословный |
+a woman of the world | опытная женщина |
+a ladies' man | дамский угодник |
+a lady-killer | сердцеед |
+a Romeo | ловелас |
+Casanova | ловелас |
+a gold digger | охотница за деньгами |
+a sugar daddy | богатый покровитель |
+a toy boy | молодой любовник | UK
+an old flame | бывшая любовь |
+on the rebound | после расставания, «на отскоке» |
+tie the knot | пожениться |
+get hitched | пожениться |
+pop the question | сделать предложение |
+walk down the aisle | идти под венец |
+settle down | остепениться; успокоиться |
+the ball and chain | жена (шутл.) |
+the patter of tiny feet | топот детских ножек (ребёнок на подходе) |
+have a crush on | быть влюблённым в |
+a crush | влюблённость |
+puppy love | детская влюблённость |
+love at first sight | любовь с первого взгляда |
+make eyes at | строить глазки |
+give sb the eye | строить глазки |
+make a pass at | приставать, подкатывать |
+hit on | подкатывать, клеиться | US
+come on to | приставать |
+fall for | влюбиться; купиться |
+be sweet on | неравнодушен к | | | old
+carry a torch for | безответно любить |
+gone on | влюблён | UK | old
+soft on | неравнодушен к |
+have the hots for | запасть на |
+an item | парочка | «are they an item?»
+two-time | изменять |
+cheat on | изменять |
+play the field | крутить со многими |
+play hard to get | набивать себе цену |
+kiss and make up | помириться |
+kiss and tell | разбалтывать о романе |
+kiss goodbye | распрощаться |
+kiss my ass | поцелуй меня в задницу | US
+kiss my arse | поцелуй меня в задницу | UK

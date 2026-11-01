@@ -17,15 +17,19 @@ from . import __version__
 from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models
 from .config import Settings, load_settings, save_settings
 from .compare import run_compare
-from .glossary import Glossary, normalize
+from .glossary import Glossary, load_base, normalize
 from .sync import SyncError, download_tools, find_tools, find_video_for, sync_subtitles
 from .translator import FileTranslator, collect_inputs, output_path_for
+from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest,
+                      download, is_newer)
 
 KEY_URLS = {
     "DeepSeek": "https://platform.deepseek.com/api_keys",
     "OpenRouter": "https://openrouter.ai/settings/keys",
 }
 ENCODINGS = {"UTF-8 (рекомендуется)": "utf-8-sig", "Windows-1251": "cp1251"}
+EXISTING = {"спрашивать": "ask", "перезаписывать (старый — в копию)": "overwrite",
+            "сохранять вторым вариантом (.ru.v2.srt)": "alt", "пропускать": "skip"}
 
 
 class App(tk.Tk):
@@ -65,6 +69,8 @@ class App(tk.Tk):
         self.add_paths(initial_paths)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(100, self._poll)
+        if self.s.check_updates:
+            self.after(1500, lambda: self.check_updates(manual=False))
         if not self.s.api_key:
             self.after(300, lambda: (self.nb.select(self.tab_set),
                                      self.log("Укажите API-ключ на вкладке «Настройки».")))
@@ -91,8 +97,8 @@ class App(tk.Tk):
         ttk.Button(bar, text="Добавить папку…", command=self.pick_folder).pack(side="left", padx=6)
         ttk.Button(bar, text="Убрать выбранные", command=self.remove_selected).pack(side="left")
         ttk.Button(bar, text="Очистить", command=self.clear_list).pack(side="left", padx=6)
-        self.engine_lbl = ttk.Label(bar, style="Hint.TLabel", cursor="hand2")
-        self.engine_lbl.pack(side="right")
+        self.engine_lbl = ttk.Label(f, style="Hint.TLabel", cursor="hand2")
+        self.engine_lbl.pack(anchor="w", pady=(6, 0))
         self.engine_lbl.bind("<Button-1>", lambda e: self.nb.select(self.tab_set))
 
         cols = ("file", "folder", "status")
@@ -149,6 +155,9 @@ class App(tk.Tk):
         self.v_gnew = tk.BooleanVar()
         ttk.Checkbutton(top, text="только непроверенные", variable=self.v_gnew,
                         command=self.refresh_glossary).pack(side="left", padx=8)
+        self.v_gbase = tk.BooleanVar()
+        ttk.Checkbutton(top, text="показывать встроенный словарь", variable=self.v_gbase,
+                        command=self.refresh_glossary).pack(side="left", padx=8)
         self.g_count = ttk.Label(top, style="Hint.TLabel")
         self.g_count.pack(side="right")
 
@@ -159,6 +168,7 @@ class App(tk.Tk):
             tv.heading(c, text=t)
             tv.column(c, width=w, anchor="center" if c == "films" else "w")
         tv.tag_configure("new", foreground="#b26a00")
+        tv.tag_configure("base", foreground="#555")
         tv.pack(fill="both", expand=True, pady=8)
         tv.bind("<Double-1>", lambda e: self.edit_entry())
         self.gtv = tv
@@ -185,19 +195,30 @@ class App(tk.Tk):
         self.gtv.delete(*self.gtv.get_children())
         self.g_keys = {}
         shown = 0
-        for e in sorted(g.entries.values(), key=lambda e: (e.status == "ok", e.key)):
-            if self.v_gnew.get() and e.status == "ok":
+        rows = sorted(g.entries.values(), key=lambda e: (e.status == "ok", e.key))
+        base = load_base()
+        if self.v_gbase.get() and not self.v_gnew.get():
+            rows += sorted((e for e in base if e.key not in g.entries), key=lambda e: e.key)
+        status_name = {"ok": "проверено", "new": "новое", "base": "встроенное"}
+        for e in rows:
+            if self.v_gnew.get() and e.status != "new":
                 continue
             if q and q not in e.key and q not in e.ru.lower():
                 continue
+            where = " ".join(x for x in (e.region, {"old": "до 70-х", "modern": "современное"}.get(e.era, ""))
+                             if x)
+            note = f"{e.note} [{where}]" if where else e.note
             iid = self.gtv.insert("", "end",
-                            values=(e.en, e.ru, e.note, "проверено" if e.status == "ok" else "новое",
-                                    len(e.films)),
-                            tags=("new",) if e.status != "ok" else ())
-            self.g_keys[iid] = e.key
+                                  values=(e.en, e.ru, note, status_name.get(e.status, e.status),
+                                          len(e.films) if e.status != "base" else ""),
+                                  tags=("new",) if e.status == "new" else (("base",) if e.status == "base" else ()))
+            self.g_keys[iid] = (e.key, e.status == "base")
             shown += 1
-        new = sum(1 for e in g.entries.values() if e.status != "ok")
-        self.g_count.configure(text=f"Всего: {len(g.entries)} · непроверенных: {new} · показано: {shown}")
+            if shown >= 3000:
+                break
+        new = sum(1 for e in g.entries.values() if e.status == "new")
+        self.g_count.configure(text=f"Личный: {len(g.entries)} · непроверенных: {new} · встроенный: {len(base)}"
+                                    f" · показано: {shown}")
 
     def edit_entry(self, new=False):
         g = Glossary.load()
@@ -206,7 +227,11 @@ class App(tk.Tk):
             sel = self.gtv.selection()
             if not sel:
                 return
-            cur = g.entries.get(self.g_keys.get(sel[0], ""))
+            key, is_base = self.g_keys.get(sel[0], ("", False))
+            cur = g.entries.get(key)
+            if cur is None and is_base:
+                # правка встроенной записи создаёт личную, которая её заменяет
+                cur = next((e for e in load_base() if e.key == key), None)
             if not cur:
                 return
         dlg = tk.Toplevel(self)
@@ -249,7 +274,7 @@ class App(tk.Tk):
             return
         g = Glossary.load()
         for iid in sel:
-            k = self.g_keys.get(iid)
+            k, is_base = self.g_keys.get(iid, ("", False))
             if k in g.entries:
                 g.entries[k].status = "ok"
         g.save()
@@ -257,11 +282,15 @@ class App(tk.Tk):
 
     def delete_entries(self):
         sel = self.gtv.selection()
+        if any(self.g_keys.get(i, ("", False))[1] for i in sel):
+            messagebox.showinfo("FilmSub", "Встроенные выражения удалить нельзя, но можно исправить "
+                                           "(двойной щелчок) — ваш вариант заменит встроенный.")
+            sel = [i for i in sel if not self.g_keys.get(i, ("", False))[1]]
         if not sel or not messagebox.askyesno("FilmSub", f"Удалить выражений: {len(sel)}?"):
             return
         g = Glossary.load()
         for iid in sel:
-            g.delete(self.g_keys.get(iid, ""))
+            g.delete(self.g_keys.get(iid, ("", False))[0])
         g.save()
         self.refresh_glossary()
 
@@ -367,9 +396,12 @@ class App(tk.Tk):
         # --- Файлы и скорость ---
         g3 = ttk.LabelFrame(f, text="Файлы и скорость", padding=10)
         g3.grid(row=3, column=0, sticky="we", pady=(10, 0))
-        self.v_over = tk.BooleanVar()
-        ttk.Checkbutton(g3, text="Перезаписывать уже готовые .ru.srt",
-                        variable=self.v_over).grid(row=0, column=0, columnspan=4, sticky="w")
+        ef = ttk.Frame(g3)
+        ttk.Label(ef, text="Если перевод уже есть:").pack(side="left")
+        self.v_existing = tk.StringVar()
+        ttk.Combobox(ef, textvariable=self.v_existing, values=list(EXISTING), state="readonly",
+                     width=38).pack(side="left", padx=6)
+        ef.grid(row=0, column=0, columnspan=4, sticky="w")
         self.v_skipru = tk.BooleanVar()
         ttk.Checkbutton(g3, text="Пропускать фильмы, в которых уже есть русские субтитры",
                         variable=self.v_skipru).grid(row=1, column=0, columnspan=4, sticky="w")
@@ -390,9 +422,19 @@ class App(tk.Tk):
                         variable=self.v_syncafter).grid(row=4, column=0, columnspan=4, sticky="w",
                                                          pady=(8, 0))
 
+        # --- Обновления ---
+        g4 = ttk.LabelFrame(f, text="Обновления", padding=10)
+        g4.grid(row=5, column=0, sticky="we", pady=(10, 0))
+        self.v_checkupd = tk.BooleanVar()
+        ttk.Checkbutton(g4, text="Проверять обновления при запуске",
+                        variable=self.v_checkupd).pack(side="left")
+        ttk.Button(g4, text="Проверить сейчас", command=lambda: self.check_updates(manual=True)).pack(
+            side="left", padx=12)
+        ttk.Label(g4, text=f"Версия {__version__}", style="Hint.TLabel").pack(side="left")
+
         ttk.Label(f, style="Hint.TLabel",
                   text="Настройки сохраняются автоматически. Ключи хранятся только на этом компьютере.").grid(
-            row=4, column=0, sticky="w", pady=(12, 0))
+            row=6, column=0, sticky="w", pady=(12, 0))
 
     # ------------------------------------------------------------ настройки
     def _load_into_widgets(self):
@@ -405,7 +447,9 @@ class App(tk.Tk):
         self.v_prof.set(s.profanity)
         self.v_analyze.set(s.analyze_film)
         self.v_sdh.set(s.strip_sdh)
-        self.v_over.set(s.overwrite)
+        mode = "overwrite" if s.overwrite else s.existing_mode
+        self.v_existing.set(next((k for k, v in EXISTING.items() if v == mode), list(EXISTING)[0]))
+        self.v_checkupd.set(s.check_updates)
         self.v_skipru.set(s.skip_if_russian)
         self.v_enc.set(next((k for k, v in ENCODINGS.items() if v == s.encoding), list(ENCODINGS)[0]))
         self.v_workers.set(str(s.workers))
@@ -451,7 +495,9 @@ class App(tk.Tk):
         s.profanity = self.v_prof.get()
         s.analyze_film = self.v_analyze.get()
         s.strip_sdh = self.v_sdh.get()
-        s.overwrite = self.v_over.get()
+        s.existing_mode = EXISTING.get(self.v_existing.get(), "ask")
+        s.overwrite = False
+        s.check_updates = self.v_checkupd.get()
         s.skip_if_russian = self.v_skipru.get()
         s.encoding = ENCODINGS.get(self.v_enc.get(), "utf-8-sig")
         s.workers = max(1, min(8, self._num(self.v_workers, 4, int)))
@@ -621,6 +667,52 @@ class App(tk.Tk):
             return
         self._launch(self._run_compare, jobs[0], s)
 
+    # ---------------------------------------------------------- обновления
+    def check_updates(self, manual: bool):
+        def job():
+            try:
+                rel = check_latest()
+                self.q.put(("update", rel, manual, None))
+            except UpdateError as e:
+                self.q.put(("update", None, manual, str(e)))
+        threading.Thread(target=job, daemon=True).start()
+
+    def _on_update_info(self, rel, manual, err):
+        if err:
+            if manual:
+                messagebox.showwarning("FilmSub", err)
+            return
+        if not rel or not is_newer(rel.version):
+            if manual:
+                messagebox.showinfo("FilmSub", f"У вас последняя версия ({__version__}).")
+            return
+        notes = rel.notes[:600] + ("…" if len(rel.notes) > 600 else "")
+        text = f"Доступна новая версия FilmSub {rel.version} (у вас {__version__}).\n\n"
+        if notes:
+            text += notes + "\n\n"
+        if not can_self_update():
+            if messagebox.askyesno("FilmSub — обновление", text + "Открыть страницу загрузки?"):
+                webbrowser.open(rel.page)
+            return
+        if self.worker:
+            if manual:
+                messagebox.showinfo("FilmSub", "Обновление можно установить после окончания перевода.")
+            return
+        if not messagebox.askyesno("FilmSub — обновление",
+                                   text + "Обновить сейчас? Программа перезапустится, настройки и словарь "
+                                          "сохранятся."):
+            return
+        self._launch(self._run_update, rel)
+
+    def _run_update(self, rel):
+        try:
+            new = download(rel, progress=lambda f, t: self.q.put(("progress", f, t)))
+            self.q.put(("log", f"Обновление {rel.version} скачано, перезапускаю программу…"))
+            self.q.put(("restart", new))
+        except UpdateError as e:
+            self.q.put(("log", f"✖ {e}"))
+            self.q.put(("finished", None))
+
     def _ensure_tools(self) -> bool:
         if find_tools():
             return True
@@ -632,9 +724,9 @@ class App(tk.Tk):
             self.q.put(("log", f"  ✖ {e}"))
             return False
 
-    def _sync_one(self, iid, path, s: Settings) -> str:
+    def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
         """Синхронизирует .ru.srt этого фильма. Возвращает подпись для статуса."""
-        out = output_path_for(path)
+        out = out or output_path_for(path)
         if not os.path.exists(out):
             self.q.put(("log", f"  Нет файла {os.path.basename(out)} — сначала переведите фильм"))
             return "нет .ru.srt"
@@ -697,19 +789,57 @@ class App(tk.Tk):
             messagebox.showwarning("FilmSub", "Укажите модель на вкладке «Настройки».")
             self.nb.select(self.tab_set)
             return
-        jobs = [(iid, p) for iid, p in self.items.items()
-                if self.tv.exists(iid) and self.tv.item(iid, "values")[2] not in ("готово",)]
+        jobs = [(iid, p) for iid, p in self.items.items() if self.tv.exists(iid)]
         if not jobs:
             messagebox.showinfo("FilmSub", "Добавьте фильмы или субтитры для перевода.")
             return
-        self._launch(self._run, jobs, s)
+        mode = s.existing_mode
+        existing = [p for _, p in jobs if os.path.exists(output_path_for(p))]
+        if existing and mode == "ask":
+            mode = self.ask_existing(existing)
+            if mode is None:
+                return
+        self._launch(self._run, jobs, s, mode)
+
+    def ask_existing(self, paths: list[str]) -> str | None:
+        """Спрашивает, что делать с фильмами, у которых перевод уже есть."""
+        dlg = tk.Toplevel(self)
+        dlg.title("Перевод уже есть")
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        frm = ttk.Frame(dlg, padding=16)
+        frm.pack(fill="both")
+        names = "\n".join("• " + os.path.basename(output_path_for(p)) for p in paths[:6])
+        if len(paths) > 6:
+            names += f"\n… и ещё {len(paths) - 6}"
+        ttk.Label(frm, text=f"Для {len(paths)} из выбранных фильмов русские субтитры уже есть:\n\n{names}"
+                            "\n\nЧто сделать?", justify="left").pack(anchor="w")
+        result = {"mode": None}
+
+        def choose(m):
+            result["mode"] = m
+            dlg.destroy()
+
+        b = ttk.Frame(frm)
+        b.pack(fill="x", pady=(14, 0))
+        ttk.Button(b, text="Сохранить вторым вариантом", command=lambda: choose("alt")).pack(fill="x")
+        ttk.Label(b, text="Рядом появится Фильм.ru.v2.srt — в Dune можно переключаться между вариантами",
+                  style="Hint.TLabel").pack(anchor="w", pady=(2, 8))
+        ttk.Button(b, text="Перезаписать", command=lambda: choose("overwrite")).pack(fill="x")
+        ttk.Label(b, text="Старый перевод сохранится в резервной копии", style="Hint.TLabel").pack(
+            anchor="w", pady=(2, 8))
+        ttk.Button(b, text="Пропустить эти фильмы", command=lambda: choose("skip")).pack(fill="x")
+        ttk.Button(b, text="Отмена", command=dlg.destroy).pack(fill="x", pady=(8, 0))
+        dlg.grab_set()
+        self.wait_window(dlg)
+        return result["mode"]
 
     def stop(self):
         self.stop_event.set()
         self.stop_btn.configure(state="disabled")
         self.status_lbl.configure(text="Останавливаю после текущих запросов…")
 
-    def _run(self, jobs, s: Settings):
+    def _run(self, jobs, s: Settings, mode: str = "skip"):
         total_cost = 0.0
         exact = True
         n = len(jobs)
@@ -728,7 +858,7 @@ class App(tk.Tk):
             tr = FileTranslator(s, log=lambda t: self.q.put(("log", t)), progress=progress,
                                 stop_flag=self.stop_event.is_set, usage_cb=on_usage)
             try:
-                res = tr.translate(path)
+                res = tr.translate(path, existing=mode)
             except ApiError as e:
                 self.q.put(("log", f"  ✖ {e}"))
                 self.q.put(("status", iid, "ошибка", "error"))
@@ -752,7 +882,7 @@ class App(tk.Tk):
                     label += f" · пропусков {res['failed']}"
                 if s.sync_after and not self.stop_event.is_set():
                     self.q.put(("status", iid, "синхронизация…", None))
-                    sync_label = self._sync_one(iid, path, s)
+                    sync_label = self._sync_one(iid, path, s, res.get("output"))
                     label += " · " + sync_label
                 self.q.put(("status", iid, label, "done"))
             elif st == "stopped":
@@ -790,6 +920,16 @@ class App(tk.Tk):
                     self.bell()
                     if self.nb.select() == str(self.tab_glo):
                         self.refresh_glossary()
+                elif kind == "update":
+                    self._on_update_info(msg[1], msg[2], msg[3])
+                elif kind == "restart":
+                    try:
+                        self.collect_settings()
+                    except Exception:  # noqa: BLE001
+                        pass
+                    apply_and_restart(msg[1])
+                    self.destroy()
+                    return
                 elif kind == "open":
                     webbrowser.open(Path(msg[1]).resolve().as_uri())
                 elif kind == "test":

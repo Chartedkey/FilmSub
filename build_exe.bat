@@ -41,7 +41,7 @@ python -m pip install pyinstaller || goto :fail
 
 echo  [3/3] Собираю FilmSub.exe...
 pyinstaller --noconfirm --clean --onefile --windowed --name FilmSub ^
-    --icon filmsub.ico --add-data "filmsub.ico;." FilmSub.pyw || goto :fail
+    --icon filmsub.ico --add-data "filmsub.ico;." --add-data "filmsub/data;filmsub/data" FilmSub.pyw || goto :fail
 
 copy /y dist\FilmSub.exe FilmSub.exe >nul || goto :fail
 call deactivate

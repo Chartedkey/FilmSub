@@ -1,0 +1,168 @@
+# Сленг эпох: 1920–1970-е (old) и современный молодёжный/интернет-сленг (modern).
+#@ region=* era=old
+the bee's knees | высший класс | 20-е
+the cat's pyjamas | высший класс | 20-е
+swell | отличный, шикарный |
+keen on | неравнодушен к, увлечён |
+peachy keen | просто супер |
+gee whiz | вот это да |
+golly gee | ух ты |
+jeepers | ух ты! |
+jeepers creepers | батюшки! |
+holy mackerel | разрази меня гром |
+gosh darn it | чёрт подери |
+daddy-o | приятель, папаша | 50-е
+cool cat | клёвый парень | 50-е
+hep cat | стиляга | 40-50-е
+hep | модный, продвинутый |
+hipster | хипстер (стиляга 50-х) |
+beatnik | битник |
+like crazy | как бешеный |
+you dig | сечёшь? |
+can you dig it | сечёшь? |
+greaser | стиляга, рокер | 50-е
+square peg | белая ворона |
+going steady | встречаться всерьёз |
+pinned | обручены по-студенчески (носит значок парня) | US
+make out | целоваться, обжиматься |
+necking | обжимаются |
+petting | ласки, обжимания |
+lovers' lane | аллея для влюблённых |
+the drive-in | кинотеатр под открытым небом |
+drive-in | автокинотеатр |
+soda jerk | продавец газировки |
+malt shop | кафе-мороженое |
+sock hop | школьные танцы |
+hot rod | тачка с форсированным двигателем |
+jalopy | развалюха |
+flivver | драндулет |
+the flicks | кино | UK
+the wireless | радио | UK
+telephone exchange | телефонная станция |
+trunk call | междугородний звонок | UK
+ring sb up | позвонить | UK
+give sb a ring | звякнуть |
+give sb a bell | звякнуть | UK
+give sb a buzz | звякнуть |
+the blower | телефон | UK
+the old man | отец; муж; начальник |
+the old lady | мать; жена |
+bobby-soxer | девчонка-подросток | 40-е
+teddy boy | стиляга | UK 50-е
+teddy boys | стиляги |
+mod | мод (модник 60-х) | UK
+rocker | рокер |
+skinhead | скинхед |
+hippie | хиппи |
+flower power | власть цветов |
+far out | отпад |
+groovy | клёвый |
+outta sight | улёт |
+right on | точно!, верно! |
+dig it | балдею |
+bummer | облом |
+the fuzz | легавые |
+cop out | увильнуть |
+cop-out | отговорка |
+freak out | сходить с ума |
+a bad trip | неудачный трип |
+turn on | вставить, кайфовать |
+tune in, turn on, drop out | включись, словись, выпади |
+a gas | умора, отпад |
+a blast | отрыв |
+the bomb | бомба (что-то отличное) |
+bodacious | шикарный |
+grody | мерзкий |
+gag me with a spoon | фу, меня сейчас стошнит | 80-е
+tubular | классный |
+take a chill pill | расслабься |
+psych | шучу! (ага, повёлся) | 80-90-е
+#@ region=* era=modern
+slay | порвать, зажечь |
+slaying | рвёт всех |
+on fleek | идеально |
+on point | безупречно |
+goals | мечта, пример |
+squad goals | вот это компания мечты |
+lowkey | вообще-то, в тихую |
+low-key | в тихую, слегка |
+highkey | откровенно, очень |
+no cap | без шуток, честно |
+cap | враньё | «that's cap»
+cappin' | врёшь |
+fr | серьёзно |
+deadass | реально, серьёзно |
+bussin | обалденно (вкусно) |
+drip | шмот, стиль |
+flex | понты; хвастаться |
+weird flex | странный повод для гордости |
+salty | обиженный, злой |
+shook | в шоке |
+sus | подозрительно |
+mid | так себе, посредственно |
+savage | жёстко |
+woke | в теме социальных проблем |
+cancelled | его «отменили» |
+ghost | игнорировать, пропасть |
+ghosted | пропал, игнорирует |
+ghosting | игнор |
+simp | подкаблучник |
+rizz | обаяние, умение клеить |
+GOAT | лучший всех времён |
+the GOAT | лучший всех времён |
+stan | фанатеть |
+tea | сплетни | «spill the tea»
+the tea | сплетни |
+throw shade | язвить |
+vibe check | проверка настроения |
+big mood | ну прям я |
+it's giving | смахивает на |
+no shade | без обид |
+periodt | и точка |
+and I oop | ой |
+yeet | швырнуть |
+OK boomer | окей, бумер |
+boomer | бумер, старпёр |
+Karen | скандальная тётка |
+FOMO | страх упустить |
+YOLO | живём один раз |
+TMI | слишком много подробностей |
+IRL | в реальной жизни |
+DM | личка; написать в личку |
+slide into sb's DMs | написать в личку (с намёком) |
+hit me up | пиши, звони |
+link up | пересечься |
+situationship | непонятные отношения |
+catfish | фейковый профиль, обманщик |
+red flag | тревожный звоночек |
+green flag | хороший знак |
+main character | главный герой (ведёт себя как) |
+NPC | безликий, массовка |
+touch grass | выйди на улицу |
+chronically online | живёт в интернете |
+doomscrolling | бесконечно листать новости |
+clout | влияние, популярность |
+clout chaser | охотник за хайпом |
+hyped | в предвкушении |
+cringe | кринж, стыдоба |
+cringey | стрёмно, кринжово |
+based | респект, по делу |
+ratio | (больше ответов, чем лайков) |
+take the L | признать поражение |
+big W | большая победа |
+gg | хорошая игра |
+noob | нуб, новичок |
+pwned | уделали |
+glow up | преображение |
+bae | любимая, любимый |
+bestie | лучшая подруга |
+bruh | бро, ну ты чё |
+homie | кореш |
+ride or die | преданный до конца |
+thirsty | отчаянно ищет внимания |
+basic bitch | заурядная тёлка |
+Netflix and chill | (приглашение на секс) |
+sending me | я ору |
+I'm dead | я умер со смеху |
+I can't even | у меня нет слов |
+literally shaking | я в шоке |

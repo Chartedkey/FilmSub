@@ -1,0 +1,477 @@
+# Британский разговорный язык и сленг (общий, не региональный).
+#@ region=UK era=*
+bloody | чёртов, грёбаный; чертовски | усилитель; по степени грубости
+bloody hell | чёрт побери! |
+blimey | ну и ну! ёлки-палки! |
+cor blimey | ни фига себе! |
+gor blimey | ни фига себе! | кокни
+crikey | ух ты! ничего себе! |
+strewth | вот это да! |
+blooming | чёртов, треклятый | эвфемизм «bloody»
+flipping | чёртов, треклятый | эвфемизм
+flaming | чёртов, проклятый | эвфемизм
+ruddy | чёртов | эвфемизм, устар.
+sodding | грёбаный, чёртов | груб.
+sod | гад, сволочь; бедолага | «poor sod» — бедолага
+sod off | отвали, проваливай | груб.
+sod it | да пошло оно! |
+sod all | ни хрена, ничего |
+sod's law | закон подлости |
+bugger | гад, паршивец; чёрт! | по степени грубости
+bugger off | отвали | груб.
+bugger all | ни хрена |
+buggered | вымотан, разбит; сломан |
+bollocks | чушь, херня; чёрт! | груб.
+dog's bollocks | высший класс, самое то | груб.
+balls-up | бардак, провал |
+cock-up | лажа, провал |
+cock up | облажаться |
+pillock | придурок |
+plonker | болван, придурок |
+prat | придурок, кретин |
+git | гад, мерзавец; урод |
+twit | дурачок, балда |
+nitwit | балда, дурень |
+berk | придурок |
+wally | придурок, дурень |
+numpty | балбес | Шотландия
+muppet | придурок, недотёпа |
+tosser | придурок, козёл | груб.
+wanker | козёл, мудак | груб.
+arse | задница |
+arsehole | мудак; задница | груб.
+arsed | «can't be arsed» — лень, неохота |
+can't be arsed | неохота, лень |
+arse about | валять дурака |
+half-arsed | кое-как, спустя рукава |
+pain in the arse | заноза в заднице |
+naff | безвкусный, отстойный |
+naff off | отвали |
+knackered | вымотан, без сил; сломан |
+cream crackered | вымотан | рифм. сленг
+shattered | вымотан, без сил | о человеке
+gutted | расстроен, убит |
+chuffed | очень доволен, рад |
+well chuffed | очень доволен |
+made up | счастлив, рад | север Англии
+over the moon | на седьмом небе |
+gobsmacked | ошарашен |
+gob | пасть, рот |
+shut your gob | закрой пасть |
+shut your cakehole | заткнись, закрой хлебало |
+cakehole | хлебало, пасть |
+put a sock in it | заткнись, хватит |
+belt up | заткнись |
+pipe down | потише, заткнись |
+leave it out | брось, хватит |
+give over | перестань, брось |
+pack it in | прекрати, завязывай |
+knock it off | хватит, прекрати |
+come off it | да брось ты, хватит заливать |
+pull the other one | так я тебе и поверил |
+pull the other one, it's got bells on | ага, так я и поверил |
+pull sb's leg | разыгрывать, прикалываться |
+take the mickey | издеваться, стебаться |
+take the mick | издеваться, подкалывать |
+take the piss | издеваться, глумиться | груб.
+extract the urine | издеваться | шутл.
+having a laugh | ты шутишь?; прикалываться | «you're having a laugh»
+having a giggle | прикалываться |
+wind up | подкол, розыгрыш; заводить, дразнить |
+wind sb up | дразнить, заводить, разыгрывать |
+winding me up | ты меня разыгрываешь |
+skive | сачковать, прогуливать |
+skiving | сачкует, прогуливает |
+bunk off | прогулять |
+throw a sickie | взять больничный, «заболеть» |
+pull a sickie | откосить, сказаться больным |
+nicked | спёрли; арестован, повязали | по контексту
+in the nick | в тюрьме |
+in good nick | в хорошем состоянии |
+pinch | стащить, спереть; арестовать | по контексту
+half-inch | стащить | рифм. сленг
+flog | загнать, продать |
+dosh | бабки, деньги |
+readies | наличные |
+skint | на мели, без гроша |
+brassic | на мели |
+hard up | на мели, в нужде |
+quids in | в выигрыше |
+on the cheap | задёшево |
+dodgy | сомнительный, мутный |
+iffy | сомнительный |
+dodgy geezer | мутный тип |
+geezer | мужик, тип |
+wide boy | ловкач, жулик |
+spiv | спекулянт, жучок | | UK | old
+fiddle | махинация, мухлёж | «on the fiddle» — химичит
+on the fiddle | мухлюет, ворует понемногу |
+bent | продажный (о полицейском); голубой (груб.) | по контексту
+bent copper | продажный коп |
+grass | стукач; настучать |
+grassed up | сдал, настучал |
+snout | осведомитель; табак | по контексту
+copper | полицейский, мент |
+bobby | полицейский |
+the old bill | полиция, легавые |
+the fuzz | легавые |
+plod | полицейский, мент |
+rozzer | мент |
+nark | стукач; брюзга |
+porkies | враки | рифм. сленг
+porky pies | враки | рифм. сленг
+telling porkies | врёт |
+tosh | чепуха |
+codswallop | чушь собачья |
+poppycock | вздор |
+balderdash | вздор, чепуха |
+twaddle | чепуха |
+claptrap | трёп, болтовня |
+cobblers | чушь | рифм. сленг
+load of old cobblers | полная чушь |
+load of rubbish | ерунда |
+rubbish | чушь, ерунда; мусор |
+bits and bobs | всякая всячина |
+odds and sods | всякая всячина |
+dog's dinner | бардак, мешанина |
+dog's breakfast | бардак |
+pear-shaped | наперекосяк | «go pear-shaped»
+gone pear-shaped | пошло наперекосяк |
+all to cock | всё наперекосяк |
+up the spout | загублено; беременна | по контексту
+done up like a kipper | обвели вокруг пальца |
+stitched up | подставили |
+stitch sb up | подставить |
+fitted up | подставили |
+banged up | посадили; избитый | по контексту
+bang to rights | взяли с поличным |
+caught bang to rights | взяли с поличным |
+legless | вусмерть пьяный |
+plastered | в стельку |
+sloshed | пьяный |
+sozzled | под мухой |
+tiddly | навеселе |
+pissed | пьяный (UK); злой (US) | зависит от страны
+pissed off | взбешён, злой |
+on the piss | бухает, в загуле |
+bevvy | выпивка |
+bevvied | пьяный |
+a swift half | по-быстрому полпинты, пропустить по одной |
+pub crawl | поход по барам |
+hair of the dog | опохмелиться |
+kip | поспать, вздремнуть; ночлег |
+have a kip | вздремнуть |
+forty winks | вздремнуть |
+a lie-in | поваляться в постели подольше |
+cheers | спасибо; пока; ваше здоровье | по контексту
+ta | спасибо |
+ta-ra | пока | север Англии
+tara | пока |
+ta-ta | пока-пока |
+cheerio | пока |
+toodle-oo | пока-пока | | UK | old
+ta-ta for now | пока-пока |
+see you later, alligator | пока-пока | шутл.
+y'alright | привет, как дела |
+wotcha | здорово, привет |
+watcha | здорово |
+mate | приятель, дружище |
+me old mate | дружище |
+me old china | дружище | рифм. сленг (china plate = mate)
+china | дружище | рифм. сленг
+squire | шеф, приятель (обращение) |
+sunshine | приятель (ирон.) | обращение к мужчине
+sunbeam | дружок (ирон.) |
+ducks | дорогуша | обращение
+me duck | дорогуша | Мидлендс
+our lass | моя жена; моя сестра | север Англии
+missus | жена; хозяйка; дамочка (обращение) |
+bird | девушка, девчонка, подружка | сленг 50-70-х; в прямом смысле — птица
+birds | девушки, девчонки | сленг
+a bit of fluff | девица, девчонка | пренебр.
+crumpet | красотки, девочки | сленг
+totty | красотки | сленг
+bint | девка | пренебр.
+bints | девки | пренебр.
+tart | шлюха, вертихвостка; пирог | по контексту
+slapper | шлюха, потаскуха | груб.
+scrubber | шлюха | груб.
+trollop | шалава | устар.
+floozy | шалава |
+cow | корова, стерва | оскорбление женщины
+miserable cow | жадина, вредина, зануда | о женщине; «miserable» = вредная, угрюмая
+old bag | старая карга |
+old dear | старушка; мать |
+toff | богатей, аристократ, «барин» |
+posh | шикарный; из высшего общества |
+la-di-da | манерный, фу-ты ну-ты |
+toffee-nosed | задирающий нос |
+snob | сноб |
+swot | зубрила, ботаник |
+toerag | мерзавец, подонок |
+scally | гопник, шпана | север
+chav | гопник | | UK | modern
+yob | хулиган, гопник |
+yobbo | хулиган |
+hooligan | хулиган |
+tearaway | сорванец, хулиган |
+ruffian | хулиган |
+scamp | сорванец |
+nipper | малыш, пацан |
+sprog | ребёнок, отпрыск |
+young 'un | малой, мелкий |
+little 'un | малыш |
+whippersnapper | молокосос |
+old codger | старикан |
+old git | старый хрыч |
+geriatric | старпёр |
+fuddy-duddy | старомодный зануда |
+square | зануда, «квадратный» | 50-60-е
+stuck-up | зазнавшийся |
+nosy parker | любопытная Варвара |
+busybody | всюду суёт нос |
+gossip | сплетник |
+blabbermouth | болтун |
+grass sb up | настучать на кого-то |
+squealer | стукач |
+telltale | ябеда |
+cheeky | наглый, нахальный; озорной |
+cheek | наглость | «what a cheek!» — вот наглость!
+the cheek of it | какова наглость! |
+a cheeky one | по-быстрому, ещё по одной |
+gormless | тупой, бестолковый |
+thick as two short planks | дуб дубом |
+daft | глупый, дурной |
+daft as a brush | дурак дураком |
+barmy | чокнутый |
+bonkers | чокнутый |
+potty | чокнутый; горшок |
+off one's trolley | спятил |
+off one's rocker | спятил |
+round the bend | рехнулся |
+round the twist | рехнулся |
+lose the plot | съехать с катушек |
+lost the plot | потерял связь с реальностью |
+loopy | чокнутый |
+nutter | псих |
+nutcase | псих |
+headcase | псих |
+doolally | чокнутый |
+not the full shilling | не все дома |
+a sandwich short of a picnic | не все дома |
+a few sandwiches short of a picnic | не все дома |
+a few bricks short of a load | не все дома |
+lights are on but nobody's home | смотрит, а не соображает |
+not my cup of tea | не по мне |
+cup of tea | (that's sb's cup of tea) — по вкусу |
+fancy | хотеть; нравиться (о человеке) | «I fancy her» — она мне нравится
+fancy a | не хочешь…? | «fancy a drink?» — выпьем?
+I fancy | мне хочется; мне нравится |
+fancy that | надо же! |
+fancy seeing you here | какие люди! |
+fancy sb | запасть на кого-то |
+fancies himself | о себе высокого мнения |
+fancies herself | о себе высокого мнения |
+snog | целоваться, сосаться |
+snogging | целуются |
+a snog | поцелуй |
+on the pull | ищет, кого бы склеить |
+chat up | клеить, флиртовать |
+chatting up | клеит, заигрывает |
+get off with | замутить с, закрутить |
+going out with | встречается с |
+dumped | бросил(а) |
+packed in | бросил(а), завязал |
+leg it | смыться, дать дёру |
+do a runner | сбежать (не заплатив) |
+scarper | смыться |
+hop it | проваливай |
+clear off | проваливай |
+push off | проваливай |
+shove off | отвали |
+get lost | отвали, проваливай |
+naff off | отвали |
+sling one's hook | проваливать |
+get stuffed | иди ты! отвали! |
+stuff it | да пошло оно! |
+you can stick | можешь засунуть себе… | «you can stick your job» — подавись своей работой
+stick it | засунь его (себе) |
+stick this | подавись этим |
+for a kickoff | для начала |
+kick off | начаться; поднять скандал | по контексту
+it's all kicking off | начинается заварушка |
+argy-bargy | перебранка |
+barney | ссора, перепалка |
+row | ссора, скандал; шум | по контексту, не «ряд»
+a right row | грандиозный скандал |
+aggro | разборки, агрессия |
+bovver | драка, разборки |
+punch-up | драка |
+fisticuffs | кулачный бой |
+duff up | отделать, избить |
+do sb over | отделать |
+give sb a hiding | всыпать, отлупить |
+a clip round the ear | подзатыльник |
+a clip round the ear'ole | подзатыльник |
+a thick ear | оплеуха |
+clobber | шмотки; врезать | по контексту
+glad rags | лучшие шмотки, парадное |
+Sunday best | лучший наряд |
+togs | шмотки |
+trainers | кроссовки |
+wellies | резиновые сапоги |
+brolly | зонтик |
+specs | очки |
+hanky | платочек |
+fiddly | муторный, кропотливый |
+faff | возня |
+faffing about | копошится, тянет время |
+mucking about | валять дурака, бездельничать |
+messing about | дурачиться |
+larking about | дурачиться |
+alecking about | валять дурака | север
+pottering about | возиться по хозяйству |
+mooch | слоняться; клянчить |
+skulk | прятаться, шнырять |
+loiter | слоняться |
+nosh-up | обжираловка, пир |
+slap-up meal | обильный обед |
+a fry-up | жареный завтрак |
+cuppa char | чашка чая |
+char | чай; уборщица | по контексту
+charlady | уборщица |
+daily | приходящая прислуга |
+a char | уборщица |
+like a charlie | как дурак |
+a right charlie | полный дурак |
+a right | полный, настоящий | «a right mess» — полный бардак
+a right mess | полный бардак |
+dead lucky | жутко повезло |
+not half | ещё как!; очень | «you don't half…» — ну ты и…
+don't half | ещё как, ну и |
+I should cocoa | ещё чего! держи карман шире | ирон.
+I should coco | держи карман шире |
+not on your nelly | ни за что! |
+not bloody likely | ещё чего! |
+no way, José | ни за что |
+my eye | как же! вздор! |
+my foot | как бы не так! | «nervous, my foot!»
+gordon bennett | ёлки-палки! |
+good grief | боже мой! |
+good lord | господи! |
+lawks | батюшки! | | UK | old
+lummy | батюшки! | | UK | old
+gosh | ой, божечки! |
+golly | ух ты! |
+what the heck | какого чёрта; да ладно |
+oh Christmas | о чёрт! | эвфемизм
+crumbs | вот те на! |
+blast | чёрт! |
+blast it | чёрт побери! |
+drat | проклятье! |
+dash it | проклятье! | | UK | old
+botheration | вот незадача! |
+hang on | погоди, подожди |
+hang about | погоди-ка |
+half a mo | минутку |
+two ticks | момент, сейчас |
+in a tick | сейчас, мигом |
+in a jiffy | мигом |
+sharpish | побыстрее, живо |
+pronto | живо, мигом |
+chop chop | живо, пошевеливайся |
+get a move on | пошевеливайся |
+get cracking | приступай, давай живей |
+crack on | продолжай, давай дальше |
+cracking | отличный, классный |
+smashing | потрясающий, классный |
+brilliant | отлично, класс | восклицание
+brill | класс |
+bang on | точно, в яблочко |
+spot on | в точку |
+sorted | всё улажено, порядок |
+job's a good 'un | дело сделано |
+Bob's your uncle | и дело в шляпе |
+and Bob's your uncle | и дело в шляпе |
+Robert's your father's brother | и дело в шляпе | шутл.
+easy peasy | проще простого |
+piece of cake | проще простого |
+a doddle | раз плюнуть |
+cushy | тёплое (местечко), лёгкий |
+a cushy number | тёплое местечко |
+jammy | везучий |
+jammy devil | везучий чёрт |
+jammy beggar | везучий черт |
+lucky beggar | везунчик |
+poor beggar | бедолага |
+beggar | малый, тип; нищий | смягч. от bugger
+cheeky beggar | нахал |
+cheeky monkey | нахалёнок |
+blighter | тип, малый; негодяй |
+rotter | негодяй | | UK | old
+bounder | подлец | | UK | old
+cad | подлец | | UK | old
+scoundrel | негодяй |
+blackguard | подлец | | UK | old
+rascal | негодник |
+scrounger | попрошайка, халявщик |
+scrounge | стрельнуть, выклянчить |
+cadge | клянчить |
+bum a fag | стрельнуть сигарету |
+ponce | сутенёр; пижон; клянчить | по контексту
+poncey | пижонистый |
+ponce off | жить за чужой счёт |
+sponger | нахлебник |
+freeloader | халявщик |
+layabout | бездельник |
+waster | бездельник, лузер |
+dosser | бомж; лентяй |
+tramp | бродяга, бомж |
+down and out | бомж, опустившийся |
+on one's uppers | без гроша |
+on the breadline | за чертой бедности |
+make ends meet | сводить концы с концами |
+spend a penny | сходить в туалет |
+the bog | сортир |
+bog roll | туалетная бумага |
+the khazi | сортир |
+the gents | мужской туалет |
+the ladies | женский туалет |
+powder one's nose | припудрить носик (сходить в туалет) |
+cheesed off | раздражён, надоело |
+browned off | осточертело |
+fed up | сыт по горло, надоело |
+hacked off | взбешён |
+narked | раздражён |
+in a strop | психует, дуется |
+throw a wobbly | закатить истерику |
+spit the dummy | закатить истерику |
+lose one's rag | выйти из себя |
+do one's nut | взбеситься |
+go spare | взбеситься; лишний | по контексту
+go mental | взбеситься |
+blow a fuse | взорваться (от злости) |
+have kittens | психовать, волноваться |
+in a flap | в панике |
+in a tizzy | в панике |
+in a state | в расстроенных чувствах |
+all of a dither | весь на нервах |
+the collywobbles | мандраж |
+the willies | мурашки, жуть |
+give sb the creeps | наводить жуть |
+put the wind up sb | напугать |
+scared stiff | до смерти напуган |
+bricking it | ссыт, трясётся от страха | груб.
+wet oneself | обмочиться (от смеха/страха) |
+in stitches | со смеху покатывались |
+a right laugh | обхохочешься |
+a good laugh | веселье; посмеялись |
+having a ball | веселятся вовсю |
+a knees-up | вечеринка, гулянка |
+a do | вечеринка, праздник |
+bash | вечеринка |
+hen night | девичник |
+stag night | мальчишник |
+on the town | гуляет по городу |
+out on the razzle | в загуле |
+gallivanting | шляется где-то |

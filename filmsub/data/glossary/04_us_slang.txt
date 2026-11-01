@@ -1,0 +1,298 @@
+# Американский разговорный язык и сленг.
+#@ region=US era=*
+y'all | вы все, ребята | Юг США
+you guys | ребята, вы |
+fixin' to | собираюсь, вот-вот | Юг США
+fixing to | собираюсь | Юг США
+howdy | здорово, привет |
+yeehaw | йии-ха! |
+ain't | не; нет |
+gonna | собираюсь |
+dude | чувак |
+bro | бро, братан |
+homie | кореш |
+homeboy | кореш, земляк |
+dawg | братан |
+pally | закадычный |
+toots | крошка, детка | | US | old
+dollface | куколка | | US | old
+broad | бабёнка, дамочка | | US | old
+honey | милая, дорогая |
+sugar | сладкая (обращение) |
+sweetheart | милая |
+cool it | остынь |
+chill out | расслабься, остынь |
+hang out | тусоваться |
+hanging out | тусуется |
+kick back | расслабиться |
+crash at sb's place | переночевать у кого-то |
+greasy spoon | забегаловка |
+grab a bite | перекусить |
+chow down | наворачивать |
+a cup of joe | чашка кофе |
+java | кофе |
+hooch | самогон, бухло |
+moonshine | самогон |
+a cold one | пивко |
+brewski | пивко |
+wasted | в хлам (пьяный, обкуренный) |
+hammered | в хлам |
+smashed | в стельку |
+buzzed | навеселе |
+blunt | косяк |
+doobie | косяк |
+dime bag | пакетик травы |
+narc | агент наркоконтроля |
+the heat | полиция, копы |
+pig | мусор (о полицейском) | груб.
+five-o | копы |
+feds | федералы, ФБР |
+G-man | агент ФБР | | US | old
+fuzz | легавые |
+flatfoot | легавый, патрульный | | US | old
+gumshoe | сыщик | | US | old
+shamus | частный сыщик | | US | old
+private eye | частный детектив |
+cool | клёво; спокойный |
+swell | отличный, классный | | US | old
+groovy | классный | 60-70-е
+far out | отпад | 60-70-е
+rad | клёво | 80-е
+radical | клёвый | 80-е
+gnarly | отпад; жуть |
+bitchin' | офигенный |
+tubular | классный | 80-е
+no way | да ладно! не может быть |
+my bad | моя ошибка, виноват |
+my b | виноват |
+not! | (шутка, на самом деле нет) | 90-е
+d'oh | блин! |
+gee whiz | ну и ну! |
+gosh darn | чтоб тебя |
+doggone | чёртов |
+holy cow | ничего себе |
+holy moly | ни фига себе |
+holy smokes | ну и дела |
+holy crap | охренеть |
+holy shit | охренеть |
+son of a gun | сукин сын (добродуш.) |
+son of a bitch | сукин сын |
+SOB | сукин сын |
+jerk off | придурок; дрочить |
+jackass | осёл, придурок |
+dumbass | тупица |
+asshole | мудак |
+douche | козёл, мудак |
+douchebag | мудак |
+schmuck | придурок |
+putz | идиот |
+klutz | растяпа |
+nerd | ботаник |
+geek | ботан, гик |
+dork | придурок, лох |
+dweeb | зануда |
+patsy | козёл отпущения, простак |
+chump | простофиля |
+sucker punch | удар исподтишка |
+the hood | район, гетто |
+hoodlum | бандит |
+wiseguy | мафиози; умник |
+wise guy | умник |
+smart aleck | умник |
+smartass | умник |
+know-it-all | всезнайка |
+hotshot | крутой, выскочка |
+big shot | шишка |
+bigwig | шишка |
+top dog | главный |
+head honcho | главный босс |
+honcho | шеф |
+the brass | начальство |
+cheapskate | скряга |
+tightwad | жмот |
+penny-pincher | скупердяй |
+deadbeat | бездельник; неплательщик |
+hobo | бродяга |
+panhandle | попрошайничать |
+rip off | обдирать; надувательство |
+ripoff | обдираловка |
+scam | развод, афера |
+con man | мошенник |
+hustler | ловкач, мошенник; шлюха | по контексту
+grifter | аферист |
+sketchy | стрёмный, подозрительный |
+hinky | подозрительный |
+two-faced | двуличный |
+rat out | заложить |
+snitch | стукач; настучать |
+squeal | настучать |
+fink | стукач |
+stool pigeon | стукач |
+canary | стукач |
+spill the beans | проболтаться |
+come clean | признаться |
+fess up | признаться |
+level with sb | говорить начистоту |
+shoot straight | говорить прямо |
+straight up | честно, серьёзно |
+on the level | честно |
+on the up and up | честно, по-честному |
+kosher | в порядке, законно |
+on the house | за счёт заведения |
+my treat | я угощаю |
+it's on me | я плачу |
+go Dutch | платить каждый за себя |
+cough up | раскошелиться |
+shell out | раскошелиться |
+fork over | отстегнуть |
+dough | бабки |
+moolah | бабки |
+greenbacks | баксы |
+a grand | штука (тысяча) |
+C-note | сотня (100 долларов) |
+Benjamins | сотки (100-долларовые) |
+bankroll | финансировать; пачка денег |
+flat broke | без гроша |
+dirt poor | нищий |
+filthy rich | богатый до неприличия |
+rolling in it | купается в деньгах |
+make a killing | сорвать куш |
+hit the jackpot | сорвать джекпот |
+break the bank | разориться |
+cost an arm and a leg | стоить целое состояние |
+a steal | даром, дёшево |
+a rip-off | обдираловка |
+dibs | чур, моё | «dibs on…»
+shotgun | чур, я впереди (в машине) | «I call shotgun»
+call shotgun | застолбить переднее сиденье |
+ride shotgun | ехать впереди, рядом с водителем |
+gas up | заправиться |
+floor it | дави на газ |
+step on it | жми!, быстрее |
+hit the road | отправляться в путь; вали |
+hit the sack | завалиться спать |
+hit the hay | завалиться спать |
+catch some z's | поспать |
+crash out | вырубиться |
+pull an all-nighter | не спать всю ночь |
+I'm beat | я вымотан |
+bushed | вымотан |
+pooped | устал |
+wiped out | вымотан |
+zonked | вырубился |
+psyched | в восторге, на подъёме |
+stoked | в восторге |
+pumped | заведён, в предвкушении |
+amped | заряжен |
+bummed | расстроен |
+bummer | облом |
+what a bummer | вот облом |
+bum out | обламывать |
+freak out | психовать |
+freaking out | психует |
+flip out | взбеситься |
+lose it | слететь с катушек |
+go postal | взбеситься |
+go ballistic | рвать и метать |
+hit the roof | взбеситься |
+pissed | злой | US: злой, а не пьяный
+pissed at | злится на |
+ticked off | раздражён |
+p.o.'d | взбешён |
+steamed | злой |
+bent out of shape | расстроен, обижен |
+get a grip | возьми себя в руки |
+get over it | забей, переживёшь |
+get a life | займись делом |
+get real | спустись на землю |
+get lost | отвали |
+beat it | вали отсюда |
+take a hike | проваливай |
+take a walk | проваливай |
+buzz off | отвали |
+bug off | отвали |
+bugging me | достаёт меня |
+quit bugging me | отстань |
+busted | попался; сломан |
+bust sb's chops | доставать, подкалывать |
+bust a gut | надорваться |
+bust one's ass | рвать задницу, вкалывать |
+kick ass | надрать задницу; круто |
+kick-ass | крутой |
+badass | крутой |
+whoop ass | надрать задницу |
+whup | отлупить |
+whupping | взбучка |
+beat up | избить |
+cold-cock | вырубить неожиданным ударом |
+pull a fast one | обмануть, провернуть |
+pull a stunt | выкинуть номер |
+pull strings | задействовать связи |
+pull the plug | прекратить, закрыть |
+pull rank | давить авторитетом |
+cut sb some slack | не будь так строг |
+give sb a break | дай передышку; да брось ты |
+gimme a break | да ладно тебе! |
+break a leg | ни пуха ни пера |
+knock 'em dead | порви их |
+go get 'em | вперёд! |
+you bet | ещё бы |
+you betcha | ещё как |
+sure thing | конечно |
+no sweat | без проблем |
+no biggie | ерунда, ничего страшного |
+big deal | подумаешь! |
+no big deal | ничего особенного |
+what's the big idea | что это ты задумал? |
+what's up | как дела? что случилось? |
+'sup | как оно? |
+what's cooking | что новенького? |
+what gives | в чём дело? |
+what's eating you | что тебя гложет? |
+what's with | что с…? | «what's with you?» — что с тобой?
+how come | почему |
+you're telling me | кому ты рассказываешь! |
+tell me about it | и не говори |
+beats me | без понятия |
+search me | понятия не имею |
+no clue | без понятия |
+clueless | без понятия; тупой |
+play dumb | прикидываться дурачком |
+gotcha | понял; попался! |
+ten-four | понял | радио
+over and out | конец связи |
+a heads-up | предупреждение |
+hold your horses | придержи коней |
+keep your shirt on | не кипятись |
+keep your pants on | не кипятись |
+cool your jets | остынь |
+take it easy | не напрягайся; пока |
+easy does it | осторожнее, потихоньку |
+hang in there | держись |
+hang tight | держись, подожди |
+sit tight | сиди и жди |
+knock it off | хватит |
+can it | заткнись |
+zip it | заткнись |
+shut your trap | закрой пасть |
+butt out | не лезь |
+butt in | вмешиваться |
+none of your beeswax | не твоё дело |
+eavesdrop | подслушивать |
+rubberneck | глазеть |
+check it out | зацени |
+scope out | разведать |
+case the joint | разведать место (перед кражей) |
+stake out | слежка, засада |
+on sb's tail | на хвосте |
+shake a tail | оторваться от хвоста |
+on the lam | в бегах |
+take it on the lam | смыться |
+make a run for it | броситься бежать |
+skip town | смыться из города |
+blow this joint | свалить отсюда |
+let's blow | сваливаем |
+I'm out | я пас; ухожу |
+let's split | сваливаем |
+peace out | пока |
+catch you later | увидимся |

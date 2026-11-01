@@ -1,0 +1,214 @@
+# Региональные говоры: север Англии, Йоркшир, Ланкашир, Ливерпуль, кокни, Шотландия, Ирландия, Австралия.
+#@ region=UK era=*
+ey up | привет; эй, гляди | Йоркшир: приветствие или «внимание»
+ay up | привет; эй | север Англии
+nowt | ничего | север
+owt | что-нибудь | север
+summat | что-то | север
+aye | да | север, Шотландия
+nay | нет |
+happen | может быть, пожалуй | Йоркшир: «happen he'll come» — может, придёт
+in't | разве не; это | «in't it lovely» — правда же, прелесть?
+int it | правда же? |
+innit | правда же? да? |
+ain't | не (является); не имеет | просторечие
+me mam | моя мама | север
+'appen | может быть | Йоркшир
+thee | тебя, тебе | диалект
+thou | ты | диалект
+tha | ты | Йоркшир
+tha knows | знаешь ли | Йоркшир
+nobbut | только, всего лишь | Йоркшир
+reet | очень; правильно | север
+gradely | отличный, хороший | Ланкашир
+mardy | капризный, обидчивый | Мидлендс, север
+mardy bum | нытик, плакса |
+nesh | мерзлявый, неженка | север
+starved | замёрзший | север: «starved to death» = окоченел
+starved to death | совсем окоченели, продрогли | север: о холоде, а не о голоде
+mither | приставать, донимать | север
+skriking | ревёт, хнычет | Ланкашир
+ginnel | переулок, проход | север
+snicket | проулок | Йоркшир
+gennel | проход между домами |
+bairn | ребёнок | север, Шотландия
+lass | девушка, девчонка |
+lassie | девочка | Шотландия
+laddie | парнишка | Шотландия
+bonny | красивый, славный | север, Шотландия
+canny | славный, хороший; хитрый | Северо-Восток; Шотландия
+brew up | заварить чай |
+put the kettle on | поставь чайник |
+tea time | время ужина | север
+dinner time | обед (в полдень) | север
+our kid | братишка, младший брат | север Англии
+our lass | моя жена; сестра |
+youse | вы (мн.ч.) | Ливерпуль, Ирландия
+yous | вы (мн.ч.) |
+scouser | ливерпулец |
+scouse | ливерпульский говор; рагу |
+geordie | уроженец Ньюкасла |
+howay | давай!, пошли! | Ньюкасл
+why aye | ещё бы! конечно! | Ньюкасл
+hinny | милая | Ньюкасл
+bairns | дети |
+gan | идти | Ньюкасл
+divvent | не | Ньюкасл
+our mam | мама |
+me duck | дорогуша | Мидлендс
+cob | булочка | Мидлендс
+cob on | надулся, обиделся | «got a cob on»
+a cob on | надутый, обиженный |
+# --- кокни и лондонский сленг ---
+apples and pears | лестница | кокни, рифм. сленг
+apples | лестница | кокни
+dog and bone | телефон | кокни
+trouble and strife | жена | кокни
+plates of meat | ноги | кокни
+plates | ноги | кокни
+mince pies | глаза | кокни; иначе — пирожки
+use your loaf | шевели мозгами | кокни (loaf of bread = head)
+loaf | башка | кокни
+barnet | причёска | кокни (Barnet Fair = hair)
+boat race | лицо, морда | кокни (face)
+boat | морда | кокни
+north and south | рот | кокни
+butcher's | взгляд; глянуть | «have a butcher's» = глянь (butcher's hook = look)
+have a butcher's | глянуть | кокни
+have a gander | глянуть |
+have a dekko | глянуть |
+have a shufti | глянуть |
+Adam and Eve | поверить | «would you Adam and Eve it?» = поверишь?
+would you Adam and Eve it | поверишь? | кокни
+porky pies | враки |
+Hampstead Heath | зубы | кокни (teeth)
+Hampsteads | зубы | кокни
+whistle and flute | костюм | кокни (suit)
+titfer | шляпа | кокни (tit for tat = hat)
+syrup | парик | кокни (syrup of figs = wig)
+rabbit | болтать | кокни (rabbit and pork = talk)
+rabbiting on | трещит без умолку |
+on your tod | один, в одиночку | кокни (Tod Sloan = own)
+on me tod | один, сам по себе |
+brown bread | мёртвый | кокни (dead)
+lolly | деньги |
+Richard the Third | птица; слово | кокни (bird/word)
+Barney Rubble | неприятности | кокни (trouble)
+pork pies | враки | кокни (lies)
+raspberry | пренебрежение; пук губами | (raspberry tart = fart)
+blow a raspberry | показать язык, фыркнуть |
+Jack Jones | один | кокни (own)
+on your Jack | один |
+guv | шеф |
+geezer | мужик |
+manor | район, своя территория | кокни
+gaff | хата, дом |
+drum | хата, дом |
+boozer | паб; пьяница |
+the smoke | Лондон | «the Big Smoke»
+the big smoke | Лондон, город |
+up west | в центр Лондона (Вест-Энд) |
+up the apples | наверх |
+bottle | смелость | «lose one's bottle» — струсить
+lose one's bottle | струсить |
+bottle it | струсить |
+bottled it | струсил |
+porkie | враньё |
+# --- Шотландия ---
+#@ region=SC era=*
+wee | маленький | Шотландия
+a wee bit | немножко |
+ken | знать | Шотландия: «d'ye ken?» — знаешь?
+dinnae | не (делай) | Шотландия
+cannae | не могу | Шотландия
+wouldnae | не стал бы |
+didnae | не |
+isnae | не является |
+willnae | не буду |
+och | ох, эх |
+aye | да |
+naw | нет |
+greet | плакать | Шотландия
+greetin | ревёт |
+glaikit | тупой, бестолковый |
+eejit | идиот | Шотландия, Ирландия
+numpty | балбес |
+bampot | псих, придурок |
+ned | гопник | Шотландия
+messages | покупки | «go for the messages» — за покупками
+the messages | продукты, покупки |
+outwith | вне, за пределами |
+dreich | промозглый, пасмурный | о погоде
+braw | славный |
+bonnie | красивый |
+loch | озеро |
+kirk | церковь |
+bairn | ребёнок |
+lassie | девочка |
+laddie | парень |
+jings | ничего себе! |
+crivvens | батюшки! |
+haud yer wheesht | заткнись, тише |
+wheesht | тише! |
+gonnae no dae that | не делай этого |
+how no | почему нет |
+# --- Ирландия ---
+#@ region=IE era=*
+craic | веселье, болтовня, тусовка | «what's the craic?» — как дела?
+what's the craic | как дела? что нового? |
+the craic | веселье |
+I'm grand | всё нормально |
+eejit | идиот |
+gobshite | трепло, придурок | груб.
+feck | чёрт; хрень | смягч. ругательство
+feckin | чёртов |
+fecking | чёртов |
+shite | дерьмо |
+yer man | этот мужик |
+yer one | эта баба |
+the guards | полиция |
+the gardaí | полиция |
+gardaí | полиция |
+garda | полицейский |
+amadán | дурак |
+sláinte | будем здоровы | тост
+giving out | ругаться, отчитывать | «she was giving out to me»
+give out to | отчитывать |
+banjaxed | сломан, разбит |
+knackered | вымотан |
+the jacks | туалет |
+the press | шкаф |
+yoke | штуковина |
+bold | непослушный | о ребёнке: «a bold child»
+# --- Австралия ---
+#@ region=AU era=*
+g'day | привет |
+mate | приятель |
+arvo | после обеда, днём |
+brekkie | завтрак |
+servo | заправка |
+bottle-o | винный магазин |
+ute | пикап |
+thongs | шлёпанцы | не «стринги»
+sheila | баба, девушка |
+bloke | мужик |
+dunny | сортир |
+fair dinkum | честно, по-настоящему |
+no worries | не за что; без проблем |
+she'll be right | всё будет нормально |
+strewth | ну и ну |
+crikey | ух ты |
+stubby | бутылочка пива |
+esky | сумка-холодильник |
+barbie | барбекю, шашлыки | не кукла
+snag | сосиска |
+tucker | еда |
+bogan | быдло, гопник |
+drongo | балбес |
+dag | чудак, лох |
+ripper | отличный |
+bonzer | классный |
+spit the dummy | закатить истерику |
+chuck a sickie | взять отгул по «болезни» |
+chuck a U-ey | развернуться |
+hooroo | пока |
