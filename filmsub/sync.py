@@ -184,6 +184,45 @@ def analyze_shift(old: list[Cue], new: list[Cue]) -> SyncReport:
                       med, segments)
 
 
+FPS_PAIRS = [(25.0, 23.976), (25.0, 24.0), (24.0, 23.976), (23.976, 25.0), (24.0, 25.0), (23.976, 24.0),
+             (29.97, 25.0), (25.0, 29.97), (29.97, 23.976), (23.976, 29.97)]
+
+
+def fit_speed(old: list[Cue], new: list[Cue], tol: float = 0.6):
+    """Ищет прямую «сдвиг = k·время + b» (другая частота кадров), устойчиво к выбросам alass.
+
+    Пробует известные пары частот кадров и оценку по медиане наклонов. Возвращает
+    (ratio, b_ms, share, fps_pair) — ratio = 1 + k; share — доля реплик в пределах tol секунд от прямой."""
+    if len(old) != len(new) or len(old) < 20:
+        return None
+    t = [o.start_ms / 1000 for o in old]
+    d = [(n.start_ms - o.start_ms) / 1000 for o, n in zip(old, new)]
+    cands: list[tuple[float, tuple | None]] = [(sub / film - 1, (film, sub)) for film, sub in FPS_PAIRS]
+    # оценка наклона по медиане попарных наклонов на прореженной выборке (Тейл — Сен)
+    step = max(1, len(t) // 150)
+    idx = list(range(0, len(t), step))
+    slopes = sorted((d[j] - d[i]) / (t[j] - t[i]) for a, i in enumerate(idx) for j in idx[a + 1:]
+                    if t[j] - t[i] > 60)
+    if slopes:
+        cands.append((slopes[len(slopes) // 2], None))
+    best = None
+    for k, pair in cands:
+        b = statistics.median(di - k * ti for ti, di in zip(t, d))
+        share = sum(1 for ti, di in zip(t, d) if abs(di - (k * ti + b)) <= tol) / len(t)
+        if best is None or share > best[2] + 0.02 or (pair and best[3] is None and share >= best[2] - 0.02):
+            best = (1 + k, b * 1000, share, pair)
+    return best
+
+
+def apply_speed(cues: list[Cue], ratio: float, b_ms: float) -> list[Cue]:
+    out = []
+    for c in cues:
+        s = int(round(c.start_ms * ratio + b_ms))
+        e = int(round(c.end_ms * ratio + b_ms))
+        out.append(Cue(max(0, s), max(0, s) + max(100, e - s), c.text, c.prefix))
+    return out
+
+
 def backup(path: str) -> str:
     folder = os.path.join(app_dir(), "backup")
     os.makedirs(folder, exist_ok=True)
@@ -353,6 +392,24 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
         return whole, r
 
     fps_fix = rep.summary.startswith("Исправлена скорость")
+    # Другая частота кадров: сдвиг ровно растёт со временем. alass по частям часто даёт при этом
+    # выбросы, и результат выглядит «рваным» — поэтому прямую ищем сами, устойчиво к выбросам.
+    if not fps_fix and (rep.status == "rejected" or rep.segments > 1):
+        fit = fit_speed(cues, parts)
+        if fit and fit[2] >= 0.7 and abs(fit[0] - 1) > 0.0008 and 0.9 < fit[0] < 1.1:
+            ratio, b_ms, share, pair = fit
+            fixed = apply_speed(cues, ratio, b_ms)
+            first = (fixed[0].start_ms - cues[0].start_ms) / 1000
+            last = (fixed[-1].start_ms - cues[-1].start_ms) / 1000
+            fps = (f"фильм — {pair[0]:g} кадра/с, а субтитры сделаны под {pair[1]:g}; ".replace(".", ",")
+                   if pair and abs(pair[1] / pair[0] - ratio) < 0.0005 else "")
+
+            def fmt(x):
+                return f"{x:+.1f} с" if abs(x) < 90 else f"{x / 60:+.1f} мин"
+            return fixed, SyncReport(
+                "changed", f"Исправлена скорость (другая частота кадров): {fps}сдвиг от {fmt(first)} в начале "
+                           f"до {fmt(last)} в конце; так совпадают {share:.0%} реплик",
+                statistics.median([(f.start_ms - c.start_ms) / 1000 for c, f in zip(cues, fixed)]), 1, track.n)
     if rep.status == "rejected" and rep_whole.status != "rejected":
         if agree >= 0.6:
             return use_whole(f"подгонка по частям отброшена ({rep.summary.split(' — ')[0].lower()})")
