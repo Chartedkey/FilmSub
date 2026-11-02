@@ -15,8 +15,8 @@ from tkinter.scrolledtext import ScrolledText
 
 from . import __version__
 from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models, openrouter_model_info
-from .gui_review import ReviewWindow
-from .review import ReviewError, estimate, run_review, variant_choices
+from .gui_review import ReviewPanel
+from .review import ReviewError, estimate, find_english_for, is_russian_file, run_review, variant_choices
 from .config import Settings, load_settings, save_settings
 from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
@@ -53,14 +53,21 @@ class App(tk.Tk):
         nb.pack(fill="both", expand=True, padx=10, pady=10)
         self.tab_main = ttk.Frame(nb, padding=10)
         self.tab_glo = ttk.Frame(nb, padding=10)
+        self.tab_rev = ttk.Frame(nb)
         self.tab_set = ttk.Frame(nb, padding=14)
         nb.add(self.tab_main, text="  Перевод  ")
         nb.add(self.tab_glo, text="  Словарь  ")
+        nb.add(self.tab_rev, text="  Проверка  ")
         nb.add(self.tab_set, text="  Настройки  ")
+        self._review_active = False
         self.nb = nb
         self._build_main()
         self._build_glossary()
         self._build_settings()
+        self.rev = ReviewPanel(self.tab_rev, on_check=self._review_files, on_stop=self.stop,
+                               get_encoding=lambda: self.s.encoding, log=self.log,
+                               model_label=self._review_model_label)
+        self.rev.pack(fill="both", expand=True)
         nb.bind("<<NotebookTabChanged>>", lambda e: self._on_tab())
         self._load_into_widgets()
         self._update_engine_label()
@@ -189,7 +196,19 @@ class App(tk.Tk):
                        "учтутся во всех следующих фильмах. В запрос попадают только выражения, которые "
                        "есть в субтитрах переводимого фильма.").pack(anchor="w", pady=(8, 0))
 
+    def _review_model_label(self) -> str:
+        model = (self.v_rmodel.get() if hasattr(self, "v_rmodel") else self.s.review_model).strip()
+        if not model:
+            return "Модель-редактор не выбрана — Настройки → «Проверка перевода»"
+        info = getattr(self, "review_info", {}).get(model)
+        price = ""
+        if info and info.get("prompt") is not None:
+            price = f" · ${info['prompt'] * 1e6:.2f} / ${(info.get('completion') or 0) * 1e6:.2f} за 1 млн токенов"
+        return f"Модель-редактор: {model}{price} (сменить — в Настройках)"
+
     def _on_tab(self):
+        if hasattr(self, "rev") and self.nb.select() == str(self.tab_rev):
+            self.rev.update_model()
         if self.nb.select() == str(self.tab_glo):
             self.refresh_glossary()
 
@@ -627,8 +646,10 @@ class App(tk.Tk):
             self.rprice_lbl.configure(text="")
             return
         pin, pout = info["prompt"] * 1e6, (info.get("completion") or 0) * 1e6
+        film = 93_000 * info["prompt"] + 19_000 * (info.get("completion") or 0)
         self.rprice_lbl.configure(text=f"{info['name']}: ${pin:.2f} за 1 млн токенов на входе, "
-                                       f"${pout:.2f} на выходе (фильм ≈ 0,15–0,25 млн на входе)")
+                                       f"${pout:.2f} на выходе — проверка фильма (~1000 реплик) "
+                                       f"≈ ${film:.2f}")
 
     def load_models(self):
         self.models_btn.configure(state="disabled")
@@ -792,12 +813,39 @@ class App(tk.Tk):
         self._launch(self._run_compare, jobs[0], s)
 
     def start_review(self):
+        """Кнопка на главной вкладке: подбирает пару файлов и открывает вкладку «Проверка»."""
         if self.worker:
             return
         jobs = self._selected_jobs()
         if len(jobs) != 1:
-            messagebox.showinfo("FilmSub", "Выберите в списке один фильм (или его английские субтитры), "
-                                           "перевод которого нужно проверить.")
+            messagebox.showinfo("FilmSub", "Выберите в списке один фильм или его субтитры (английские или "
+                                           "русские), перевод которого нужно проверить.")
+            return
+        iid, path = jobs[0]
+        if is_russian_file(path):
+            ru = path
+            en = find_english_for(path)
+            if not en:
+                messagebox.showinfo("FilmSub", "Рядом с русскими субтитрами не нашлось английского оригинала. "
+                                               "Укажите его на вкладке «Проверка».")
+        else:
+            en = path
+            files = variant_choices(path)
+            if not files:
+                messagebox.showinfo("FilmSub", "У этого фильма ещё нет русских субтитров — сначала переведите "
+                                               "его или укажите файл перевода на вкладке «Проверка».")
+                ru = ""
+            else:
+                ru = files[0] if len(files) == 1 else self._choose_variant(files)
+                if ru is None:
+                    return
+        self.rev.set_files(en or "", ru or "")
+        self.nb.select(self.tab_rev)
+        if en and ru:
+            self._review_files(en, ru, iid)
+
+    def _review_files(self, en: str, ru: str, iid=None):
+        if self.worker:
             return
         s = self.collect_settings()
         if not s.keys.get("OpenRouter") or not s.review_model:
@@ -805,15 +853,10 @@ class App(tk.Tk):
                                            "Настройки → «Проверка перевода».")
             self.nb.select(self.tab_set)
             return
-        iid, path = jobs[0]
-        files = variant_choices(path)
-        if not files:
-            messagebox.showinfo("FilmSub", "У этого фильма ещё нет русских субтитров — сначала переведите его.")
-            return
-        ru = files[0] if len(files) == 1 else self._choose_variant(files)
-        if not ru:
-            return
-        self._launch(self._run_review, iid, path, ru, s)
+        self._review_active = True
+        self.rev.update_model()
+        self.rev.set_running(True)
+        self._launch(self._run_review, iid, en, ru, s)
 
     def _choose_variant(self, files: list[str]) -> str | None:
         dlg = tk.Toplevel(self)
@@ -843,7 +886,8 @@ class App(tk.Tk):
 
     def _run_review(self, iid, path, ru_path, s: Settings):
         log = lambda t: self.q.put(("log", t))  # noqa: E731
-        self.q.put(("status", iid, "проверка…", None))
+        if iid:
+            self.q.put(("status", iid, "проверка…", None))
         try:
             # примерная стоимость — до начала, чтобы не было сюрпризов
             from .srt import read_srt
@@ -858,32 +902,38 @@ class App(tk.Tk):
                     info = None
             if src and ru:
                 tin, tout, cost = estimate(src.cues, ru, info)
-                price = f"примерно ${cost:.2f}" if cost is not None else "стоимость неизвестна"
+                price = (f"примерно ${cost * 0.8:.2f}–{cost * 1.25:.2f}" if cost is not None
+                         else "стоимость неизвестна")
                 if not self._ask_main(f"Проверить {os.path.basename(ru_path)} моделью {s.review_model}?\n\n"
                                       f"Реплик: {len(ru)}. Это {price} (≈{tin // 1000} тыс. токенов на входе, "
                                       f"≈{tout // 1000} тыс. на выходе) плюс 1–2 цента за справку о фильме "
                                       "моделью перевода.\n\nСам перевод не изменится."):
-                    self.q.put(("status", iid, "проверка отменена", None))
+                    if iid:
+                        self.q.put(("status", iid, "проверка отменена", None))
                     self.q.put(("finished", None))
                     return
             res = run_review(path, ru_path, s, log,
                              lambda f, t="": self.q.put(("progress", f, t)), self.stop_event.is_set)
         except (ReviewError, ApiError) as e:
             log(f"  ✖ {e}")
-            self.q.put(("status", iid, "проверка не удалась", "error"))
+            if iid:
+                self.q.put(("status", iid, "проверка не удалась", "error"))
             self.q.put(("finished", None))
             return
         except Exception as e:  # noqa: BLE001
             log(f"  ✖ Непредвиденная ошибка: {e!r}")
-            self.q.put(("status", iid, "проверка не удалась", "error"))
+            if iid:
+                self.q.put(("status", iid, "проверка не удалась", "error"))
             self.q.put(("finished", None))
             return
         if res:
             label = f"оценка {res.score}/10" if res.score is not None else "проверено"
-            self.q.put(("status", iid, f"{label} · замечаний {len(res.issues)}", "done"))
+            if iid:
+                self.q.put(("status", iid, f"{label} · замечаний {len(res.issues)}", "done"))
             self.q.put(("review", res))
         else:
-            self.q.put(("status", iid, "проверка остановлена", None))
+            if iid:
+                self.q.put(("status", iid, "проверка остановлена", None))
         self.q.put(("finished", res.cost if res and res.cost is not None else None))
 
     # ---------------------------------------------------------- обновления
@@ -1257,6 +1307,8 @@ class App(tk.Tk):
                 elif kind == "progress":
                     self.pb["value"] = int(msg[1] * 1000)
                     self.status_lbl.configure(text=msg[2])
+                    if self._review_active:
+                        self.rev.set_progress(msg[1], msg[2])
                 elif kind == "cost":
                     approx = "" if msg[2] else "≈ "
                     self.cost_lbl.configure(text=f"Потрачено: {approx}${msg[1]:.3f}")
@@ -1272,6 +1324,9 @@ class App(tk.Tk):
                     if msg[1] is not None:
                         self.log(f"Итого потрачено ≈ ${msg[1]:.3f}")
                     self.bell()
+                    if self._review_active:
+                        self._review_active = False
+                        self.rev.finished("Остановлено" if stopped else "Готово")
                     if self.nb.select() == str(self.tab_glo):
                         self.refresh_glossary()
                 elif kind == "ask":
@@ -1314,7 +1369,9 @@ class App(tk.Tk):
                     self.rmodels_btn.configure(state="normal")
                     self.log(f"Не удалось загрузить список моделей: {msg[1]}")
                 elif kind == "review":
-                    ReviewWindow(self, msg[1], self.s.encoding, log=self.log)
+                    self.rev.refresh_history()
+                    self.rev.show(msg[1])
+                    self.nb.select(self.tab_rev)
                 elif kind == "models_err":
                     self.models_btn.configure(state="normal")
                     self.log(f"Не удалось загрузить список моделей: {msg[1]}")

@@ -10,6 +10,10 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from . import __version__
+
+USER_AGENT = f"FilmSub/{__version__} (+https://github.com/Chartedkey/FilmSub)"
+
 PROVIDERS = {
     "DeepSeek": {
         "base_url": "https://api.deepseek.com",
@@ -63,6 +67,7 @@ class ChatClient:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": USER_AGENT,
         }
         if self.provider == "OpenRouter":
             headers["HTTP-Referer"] = "https://github.com/filmsub"
@@ -78,14 +83,16 @@ class ChatClient:
             except Exception:
                 pass
             code = e.code
+            tail = f" Ответ сервера: {detail}" if detail else ""
             if code == 401:
-                raise ApiError("Неверный API-ключ (401). Проверьте ключ в настройках.", retryable=False)
+                raise ApiError("Неверный API-ключ (401). Проверьте ключ в настройках." + tail, retryable=False)
             if code == 402:
-                raise ApiError("Недостаточно средств на балансе (402). Пополните счёт.", retryable=False)
+                raise ApiError("Недостаточно средств на балансе (402). Пополните счёт." + tail, retryable=False)
             if code == 403:
                 raise ApiError(f"Доступ запрещён (403): {detail}", retryable=False)
             if code == 404:
-                raise ApiError(f"Модель «{self.model}» не найдена (404). Проверьте название модели.", retryable=False)
+                raise ApiError(f"Модель «{self.model}» не найдена (404). Проверьте название модели." + tail,
+                               retryable=False)
             if code == 400:
                 raise ApiError(f"Сервер отклонил запрос (400): {detail}", retryable=False)
             raise ApiError(f"Ошибка сервера {code}: {detail}")
@@ -171,7 +178,7 @@ class ChatClient:
 
 def openrouter_model_info(timeout: int = 30) -> dict[str, dict]:
     """id модели → {"name", "prompt" и "completion" (цена за токен, $), "context"}."""
-    req = urllib.request.Request("https://openrouter.ai/api/v1/models")
+    req = urllib.request.Request("https://openrouter.ai/api/v1/models", headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     info = {}
@@ -191,7 +198,7 @@ def openrouter_model_info(timeout: int = 30) -> dict[str, dict]:
 
 
 def list_openrouter_models(timeout: int = 30) -> list[str]:
-    req = urllib.request.Request("https://openrouter.ai/api/v1/models")
+    req = urllib.request.Request("https://openrouter.ai/api/v1/models", headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return sorted(m["id"] for m in data.get("data", []) if "id" in m)

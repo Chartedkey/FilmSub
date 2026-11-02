@@ -155,16 +155,43 @@ def variant_choices(source: str) -> list[str]:
 
 
 def estimate(en: list[Cue], ru: list[Cue], info: dict | None) -> tuple[int, int, float | None]:
-    """Примерные токены (вход, выход) и стоимость в долларах."""
-    chars = sum(len(c.text) for c in en) + sum(len(c.text) for c in ru)
+    """Примерные токены (вход, выход) и стоимость в долларах.
+
+    Подогнано под реальную проверку (962 реплики, Claude Opus 5.5 — $0,76): русский текст
+    занимает примерно вдвое больше токенов, чем английский; на каждую часть уходят правила,
+    справка о фильме и разметка JSON (~2600 токенов); ответ — в среднем ~70 токенов на
+    каждую четвёртую реплику."""
+    ce = sum(len(c.text) for c in en)
+    cr = sum(len(c.text) for c in ru)
     batches = max(1, (len(ru) + CHUNK - 1) // CHUNK)
-    ctx = (BEFORE * 2 + AFTER) / CHUNK
-    tin = int(chars * (1 + ctx) / 2.6 + batches * 1300)
-    tout = int(len(ru) * 0.12 * 90 + batches * 60)
+    ctx = 1 + (BEFORE * 2 + AFTER) / CHUNK
+    tin = int((ce / 4 + cr / 2.2) * ctx * 1.15 + batches * 2600)
+    tout = int(len(ru) * 0.25 * 70 + batches * 120)
     cost = None
     if info and info.get("prompt") is not None and info.get("completion") is not None:
         cost = tin * info["prompt"] + tout * info["completion"]
     return tin, tout, cost
+
+
+def find_english_for(ru_path: str) -> str | None:
+    """Для Фильм.ru.srt / Фильм.ru.v2.srt — фильм или английские субтитры рядом с тем же именем."""
+    from .translator import VIDEO_EXT, find_sidecar_srt
+    base, _ = _split_name(ru_path)
+    base = re.sub(r"\.ru\.v\d+$", "", base, flags=re.I)
+    base = re.sub(r"\.(ru|rus|russian)$", "", base, flags=re.I)
+    for ext in sorted(VIDEO_EXT):
+        for cand in (base + ext, base + ext.upper()):
+            if os.path.exists(cand):
+                return cand
+    return find_sidecar_srt(base + ".mkv")
+
+
+def is_russian_file(path: str) -> bool:
+    from .translator import RU_TOKENS, is_russian_variant
+    if not path.lower().endswith(".srt"):
+        return False
+    _, tokens = _split_name(path)
+    return any(t in RU_TOKENS for t in tokens) or is_russian_variant(path)
 
 
 # ------------------------------------------------------------------ сама проверка
@@ -325,6 +352,46 @@ def save_result(res: ReviewResult) -> None:
     write_report(res)
 
 
+def update_saved(res: ReviewResult) -> None:
+    """Сохраняет отметки и правки исправлений в файл проверки — чтобы открыть её потом такой же."""
+    if res.data_file:
+        try:
+            with open(res.data_file, "w", encoding="utf-8") as f:
+                json.dump(res.to_json(), f, ensure_ascii=False, indent=1)
+        except OSError:
+            pass
+
+
+def load_result(path: str) -> ReviewResult:
+    with open(path, encoding="utf-8") as f:
+        d = json.load(f)
+    issues = [Issue(**{k: v for k, v in i.items() if k in Issue.__dataclass_fields__}) for i in d.get("issues", [])]
+    res = ReviewResult(**{k: v for k, v in d.items() if k in ReviewResult.__dataclass_fields__ and k != "issues"})
+    res.issues = issues
+    res.data_file = path
+    return res
+
+
+def list_results(limit: int = 50) -> list[tuple[str, str]]:
+    """Прошлые проверки, новые сверху: (путь к файлу, подпись для списка)."""
+    folder = _out_dir()
+    files = sorted((os.path.join(folder, n) for n in os.listdir(folder) if n.endswith(".json")),
+                   key=os.path.getmtime, reverse=True)[:limit]
+    out = []
+    for p in files:
+        try:
+            with open(p, encoding="utf-8") as f:
+                d = json.load(f)
+        except (OSError, ValueError):
+            continue
+        stamp = time.strftime("%d.%m.%Y %H:%M", time.localtime(os.path.getmtime(p)))
+        score = d.get("score")
+        n = len(d.get("issues") or [])
+        out.append((p, f"{stamp} — {os.path.basename(d.get('ru_path', ''))} — "
+                       f"оценка {score if score is not None else '—'}, замечаний {n} ({d.get('model', '')})"))
+    return out
+
+
 def write_report(res: ReviewResult) -> str:
     def cell(t):
         return html.escape(t or "").replace("\n", "<br>")
@@ -378,7 +445,10 @@ def apply_fixes(res: ReviewResult, encoding: str = "utf-8-sig") -> tuple[str, in
         if it.accepted and 0 <= it.idx < len(ru):
             ru[it.idx].text = it.fix
             n += 1
-    base, _ = _split_name(res.source)
+    # новый вариант кладём рядом с проверенным русским файлом и под его именем
+    base, _ = _split_name(res.ru_path)
+    base = re.sub(r"\.ru\.v\d+$", "", base, flags=re.I)
+    base = re.sub(r"\.(ru|rus|russian)$", "", base, flags=re.I)
     k = 2
     while os.path.exists(f"{base}.ru.v{k}.srt"):
         k += 1
