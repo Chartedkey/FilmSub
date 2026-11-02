@@ -121,8 +121,11 @@ def find_video_for(path: str) -> str | None:
     """Для .srt ищет фильм с тем же именем (Фильм.ru.srt → Фильм.mkv)."""
     if path.lower().endswith(VIDEO_EXT):
         return path
+    import re
     from .translator import _split_name
     stem, _ = _split_name(path)
+    # Фильм.ru.v2.srt → Фильм
+    stem = re.sub(r"\.(ru|rus|russian)\.v\d+$", "", stem, flags=re.I)
     for ext in VIDEO_EXT:
         for cand in (stem + ext, stem + ext.upper()):
             if os.path.exists(cand):
@@ -282,7 +285,7 @@ def _alass_once(alass, ref, cues, tmp, env, stop_flag, extra, tag) -> list[Cue]:
     if proc.returncode != 0 or not os.path.exists(out):
         tail = output.strip().splitlines()[-3:]
         raise SyncError("alass завершился с ошибкой: " + " / ".join(tail))
-    return read_srt(out)
+    return read_srt(out, keep_order=True)   # порядок реплик как на входе — сопоставляем по номеру
 
 
 _NOSPLIT_FLAG: dict[str, str] = {}
@@ -332,16 +335,42 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
     rep_whole = analyze_shift(cues, whole)
     rep = analyze_shift(cues, parts)
     rep.track = track.n
+    if len(cues) != len(whole) or len(cues) != len(parts):
+        return parts, rep
+    shifts = [(b.start_ms - a.start_ms) / 1000 for a, b in zip(cues, whole)]
+    w_med = statistics.median(shifts)
+    # доля реплик, у которых подгонка по частям совпала с единым сдвигом (±0,6 с)
+    agree = sum(1 for a, b in zip(whole, parts) if abs(a.start_ms - b.start_ms) <= 600) / len(cues)
+    deltas = sorted((b.start_ms - a.start_ms) / 1000 for a, b in zip(cues, parts))
+    spread = f"{deltas[len(deltas) // 20]:+.0f}…{deltas[-1 - len(deltas) // 20]:+.0f} с"
+
+    def use_whole(why: str):
+        if rep_whole.status == "unchanged":
+            r = SyncReport("unchanged", f"Субтитры уже совпадают со звуком ({why})", 0.0, 1, track.n)
+        else:
+            r = SyncReport("changed", f"Применён единый сдвиг {w_med:+.2f} с — так совпадают {agree:.0%} реплик; "
+                                      f"{why}", w_med, 1, track.n)
+        return whole, r
+
     fps_fix = rep.summary.startswith("Исправлена скорость")
-    if rep.status == "changed" and rep.segments > 1 and not fps_fix and len(cues) == len(whole):
+    if rep.status == "rejected" and rep_whole.status != "rejected":
+        if agree >= 0.6:
+            return use_whole(f"подгонка по частям отброшена ({rep.summary.split(' — ')[0].lower()})")
+        return parts, SyncReport(
+            "rejected", f"Сверка со звуком ненадёжна: единый сдвиг {w_med:+.1f} с подходит только {agree:.0%} "
+                        f"реплик, у остальных сдвиг от {spread} — похоже на другое издание фильма (другой "
+                        "монтаж). Тайминги не меняю", rep.median_shift, rep.segments, track.n)
+    if rep.status == "changed" and rep.segments > 1 and not fps_fix:
         # по частям и целиком должно получаться похоже: большинство реплик — с тем же сдвигом
         near = sum(1 for a, b in zip(whole, parts) if abs(a.start_ms - b.start_ms) <= 2000)
         if near < len(cues) * 0.6:
-            alt = f"единый сдвиг {rep_whole.median_shift:+.1f} с" if rep_whole.status != "rejected" else "единого сдвига нет"
+            alt = f"единый сдвиг {w_med:+.1f} с" if rep_whole.status != "rejected" else "единого сдвига нет"
             return parts, SyncReport(
                 "rejected", f"Сверка со звуком ненадёжна: по частям в среднем {rep.median_shift:+.1f} с, "
                             f"а для всего фильма — {alt}. Вероятно, другое издание фильма или звук "
                             "не той дорожки — тайминги не меняю", rep.median_shift, rep.segments, track.n)
+    if rep.status == "rejected":
+        rep.summary += f" (разброс сдвигов {spread})"
     return parts, rep
 
 

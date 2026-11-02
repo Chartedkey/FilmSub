@@ -52,7 +52,7 @@ def decode_bytes(data: bytes) -> str:
     return data.decode("cp1252", errors="replace")
 
 
-def parse_srt(text: str) -> list[Cue]:
+def parse_srt(text: str, keep_order: bool = False) -> list[Cue]:
     text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("﻿")
     lines = text.split("\n")
     cues: list[Cue] = []
@@ -101,13 +101,15 @@ def parse_srt(text: str) -> list[Cue]:
             raw = raw[pm.end():].lstrip()
         if raw:
             cues.append(Cue(start, end, raw, prefix))
-    cues.sort(key=lambda c: c.start_ms)
+    if not keep_order:
+        cues.sort(key=lambda c: c.start_ms)
     return cues
 
 
-def read_srt(path: str) -> list[Cue]:
+def read_srt(path: str, keep_order: bool = False) -> list[Cue]:
+    """keep_order=True — порядок как в файле (нужно, чтобы сопоставить реплики после alass)."""
     with open(path, "rb") as f:
-        return parse_srt(decode_bytes(f.read()))
+        return parse_srt(decode_bytes(f.read()), keep_order=keep_order)
 
 
 def build_srt(cues: list[Cue], use_translation: bool = True) -> str:

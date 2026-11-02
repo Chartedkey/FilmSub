@@ -999,7 +999,14 @@ class App(tk.Tk):
         if v:
             return v
         v = s.video_map.get(os.path.normcase(os.path.abspath(path)))
-        return v if v and os.path.exists(v) else None
+        if v and os.path.exists(v):
+            return v
+        if is_russian_file(path):
+            # для русского файла (в том числе .ru.v2.srt) — фильм английского оригинала рядом
+            en = find_english_for(path)
+            if en and os.path.normcase(en) != os.path.normcase(path):
+                return find_video_for(en) or self._video_for(en, s)
+        return None
 
     def choose_film(self):
         """Указать (или сменить) файл фильма для выбранных субтитров — для голосов и синхронизации."""
@@ -1098,8 +1105,8 @@ class App(tk.Tk):
         return box["answer"]
 
     def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
-        """Синхронизирует .ru.srt этого фильма. Возвращает подпись для статуса."""
-        out = out or output_path_for(path)
+        """Синхронизирует .ru.srt этого фильма (или выбранный русский файл, например .ru.v2.srt)."""
+        out = out or (path if is_russian_file(path) else output_path_for(path))
         if not os.path.exists(out):
             self.q.put(("log", f"  Нет файла {os.path.basename(out)} — сначала переведите фильм"))
             return "нет .ru.srt"
