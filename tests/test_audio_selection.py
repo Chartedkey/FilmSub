@@ -44,7 +44,7 @@ class AudioSelectionTests(unittest.TestCase):
         original = source.read_bytes()
         with patch.object(sync, 'find_tools', return_value=('alass', 'ffmpeg', 'ffprobe')), patch.object(sync, 'audio_tracks', return_value=self.tracks), patch.object(sync, '_alass_once') as alass, patch.object(sync, 'backup') as backup:
             with self.assertRaises(sync.SyncCancelled):
-                sync.sync_subtitles('Film.mkv', str(source), print, choose_track=lambda _: None)
+                sync.sync_subtitles('Film.mkv', str(source), Mock(), choose_track=lambda _: None)
             alass.assert_not_called()
             backup.assert_not_called()
         self.assertEqual(source.read_bytes(), original)
