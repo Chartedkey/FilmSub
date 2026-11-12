@@ -159,7 +159,7 @@ class DiscTests(unittest.TestCase):
         # MPEG-TS starts at 11.4 s; MPLS uses the original transport timestamps.
         for n, freq in [('00001', 440), ('00002', 880)]:
             subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
-                            f'sine=frequency={freq}:duration=3', '-c:a', 'pcm_bluray',
+                            f'sine=frequency={freq}:duration=3', '-c:a', 'ac3',
                             '-mpegts_m2ts_mode', '1', '-output_ts_offset', '10',
                             '-f', 'mpegts', str(b / 'STREAM' / (n + '.m2ts'))], check=True)
         playlist(b / 'PLAYLIST/00001.mpls', [('00002', 12, 13), ('00001', 12, 13)])
