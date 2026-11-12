@@ -331,6 +331,42 @@ def _wait(proc, stop_flag, limit, name):
         time.sleep(0.3)
 
 
+def _run_ffmpeg(cmd, stop_flag, error: str, cwd=None) -> None:
+    """Пишет stderr в файл: подробная ошибка без риска заполнить pipe."""
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    with tempfile.TemporaryFile() as errors:
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=errors,
+                                    cwd=cwd, creationflags=flags)
+        except OSError as e:
+            raise SyncError(f"Не удалось запустить ffmpeg: {e}") from e
+        _wait(proc, stop_flag, 1800, "ffmpeg")
+        if proc.returncode != 0:
+            errors.seek(0, os.SEEK_END)
+            errors.seek(max(0, errors.tell() - 8192))
+            tail = errors.read().decode("utf-8", "replace").strip().splitlines()[-6:]
+            detail = " / ".join(line.strip() for line in tail if line.strip())
+            raise SyncError(f"{error} (код {proc.returncode})" + (f": {detail}" if detail else ""))
+
+
+def _join_audio(pieces: list[str], ffmpeg: str, tmp: str, stop_flag=None) -> str:
+    # DVD VOB уже прочитаны единым потоком: повторно объединять звук не нужно.
+    if len(pieces) == 1:
+        return pieces[0]
+    manifest = os.path.join(tmp, "audio.ffconcat")
+    with open(manifest, "w", encoding="utf-8") as f:
+        f.write("ffconcat version 1.0\n")
+        for p in pieces:
+            f.write(f"file '{os.path.basename(p)}'\n")
+    # Native FLAC совместим и со старым ffmpeg из комплекта alass.
+    # Имена файлов ASCII относительно cwd: не передаём Unicode-путь через concat.
+    ref = os.path.join(tmp, "audio.flac")
+    cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-f", "concat", "-i", "audio.ffconcat",
+           "-map", "0:a:0", "-c:a", "flac", "audio.flac"]
+    _run_ffmpeg(cmd, stop_flag, "ffmpeg не смог объединить звук диска", cwd=tmp)
+    return ref
+
+
 def _extract_track(video: str, track: int, ffmpeg: str, dest: str, stop_flag=None, interval=None) -> None:
     """Вынимает одну звуковую дорожку в отдельный файл (моно 16 кГц, FLAC) — для alass."""
     cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-i", video, "-map", f"0:a:{track}", "-vn", "-sn",
@@ -339,14 +375,9 @@ def _extract_track(video: str, track: int, ffmpeg: str, dest: str, stop_flag=Non
         start, end = interval
         cmd[5:5] = ["-copyts"]
         cmd[-1:-1] = ["-ss", str(start), "-t", str(end - start)]
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-    try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
-    except OSError as e:
-        raise SyncError(f"Не удалось запустить ffmpeg: {e}")
-    _wait(proc, stop_flag, 1800, "ffmpeg")
-    if proc.returncode != 0 or not os.path.exists(dest) or os.path.getsize(dest) < 10_000:
-        raise SyncError("ffmpeg не смог извлечь звуковую дорожку")
+    _run_ffmpeg(cmd, stop_flag, "ffmpeg не смог извлечь звуковую дорожку")
+    if not os.path.exists(dest) or os.path.getsize(dest) < 10_000:
+        raise SyncError("ffmpeg извлёк пустую или слишком короткую звуковую дорожку")
 
 
 def _alass_once(alass, ref, cues, tmp, env, stop_flag, extra, tag) -> list[Cue]:
@@ -439,23 +470,7 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
             _extract_track(str(clip), track.n, ffmpeg, dest, stop_flag,
                            interval=(start, end) if start is not None else None)
             pieces.append(dest)
-        # Декодированные части имеют одинаковый формат и начинаются с нуля.
-        manifest = os.path.join(tmp, "audio.ffconcat")
-        with open(manifest, "w", encoding="utf-8") as f:
-            f.write("ffconcat version 1.0\n")
-            for p in pieces:
-                f.write(f"file '{os.path.basename(p)}'\n")
-        ref = os.path.join(tmp, "audio.mkv")
-        cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-f", "concat", "-i", manifest,
-               "-c", "copy", ref]
-        try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        except OSError as e:
-            raise SyncError(f"Не удалось запустить ffmpeg: {e}") from e
-        _wait(proc, stop_flag, 1800, "ffmpeg")
-        if proc.returncode != 0:
-            raise SyncError("ffmpeg не смог объединить звук диска")
+        ref = _join_audio(pieces, ffmpeg, tmp, stop_flag)
         new, report = _align_file(ref, cues, log, stop_flag, allow_other_lang=True)
         report.track = selected.n
         return new, report
@@ -481,7 +496,7 @@ def _align_file(video: str, cues: list[Cue], log, stop_flag=None, allow_other_la
     with tempfile.TemporaryDirectory() as tmp:
         ref = video
         if len(tracks) > 1 and track.n != 0:
-            ref = os.path.join(tmp, "audio.mkv")
+            ref = os.path.join(tmp, "audio.flac")
             _extract_track(video, track.n, ffmpeg, ref, stop_flag)
         whole = _alass_once(alass, ref, cues, tmp, env, stop_flag, [nosplit_flag(alass)], "whole")
         parts = _alass_once(alass, ref, cues, tmp, env, stop_flag, [], "parts")

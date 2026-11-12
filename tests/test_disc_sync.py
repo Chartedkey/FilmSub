@@ -144,6 +144,7 @@ class DiscTests(unittest.TestCase):
         (d / 'VTS_01_0.IFO').write_bytes(ifo)
         logs = []
         def check_audio(ref, cues, *args, **kwargs):
+            self.assertEqual(Path(ref).suffix, ".flac")
             out = subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries',
                                            'format=duration', '-of', 'csv=p=0', ref])
             self.assertAlmostEqual(float(out), 3, delta=.15)
@@ -164,6 +165,7 @@ class DiscTests(unittest.TestCase):
         playlist(b / 'PLAYLIST/00001.mpls', [('00002', 12, 13), ('00001', 12, 13)])
         (b / 'PLAYLIST/00000.mpls').unlink()
         def check_audio(ref, cues, *args, **kwargs):
+            self.assertEqual(Path(ref).suffix, ".flac")
             out = subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries',
                                            'format=duration', '-of', 'csv=p=0', ref])
             self.assertAlmostEqual(float(out), 2, delta=.15)

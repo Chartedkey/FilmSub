@@ -56,6 +56,17 @@ jobs:
       - name: Сведения о версии для exe
         run: python tools/make_version_info.py version_info.txt
 
+      - name: Установить ffmpeg из комплекта alass для интеграционных тестов
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'alass-windows64.zip'
+          $tools = Join-Path $env:RUNNER_TEMP 'filmsub-sync-tools'
+          Invoke-WebRequest 'https://github.com/kaegi/alass/releases/latest/download/alass-windows64.zip' -OutFile $archive
+          Expand-Archive $archive -DestinationPath $tools
+          $ffmpeg = Join-Path $tools 'alass-windows64/ffmpeg/bin'
+          $ffmpeg | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          & (Join-Path $ffmpeg 'ffmpeg.exe') -version
+
       - name: Проверить синхронизацию и сохранность перевода
         run: python -m unittest discover -s tests -v
 
