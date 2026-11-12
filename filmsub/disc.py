@@ -107,3 +107,42 @@ def dvd_languages(path: str, title: str) -> list[str]:
         code = attr[2:4].decode("ascii", "replace").lower()
         langs.append(code if attr[0] & 0x0c == 0x04 and re.fullmatch("[a-z]{2}", code) else "")
     return langs
+
+
+def bluray_languages(path: str, clip: str) -> dict[int, str]:
+    """Языки по PID из CLPI, когда M2TS не содержит языковых меток."""
+    folder = disc_folder(path)
+    info = child(folder, "CLIPINF") if folder is not None else None
+    metadata = child(info, Path(clip).stem + ".clpi") if info is not None else None
+    if metadata is None:
+        return {}
+    try:
+        data = metadata.read_bytes()
+        if data[:8] not in (b"HDMV0100", b"HDMV0200", b"HDMV0300"):
+            return {}
+        offset = struct.unpack_from(">I", data, 12)[0]
+        end = offset + 4 + struct.unpack_from(">I", data, offset)[0]
+        if end > len(data):
+            return {}
+        count = data[offset + 5]
+        pos = offset + 6
+        languages = {}
+        for _ in range(count):
+            if pos + 8 > end:
+                return {}
+            streams = data[pos + 6]
+            pos += 8
+            for _ in range(streams):
+                pid, size = struct.unpack_from(">HB", data, pos)
+                pos += 3
+                coding = data[pos:pos + size]
+                if not size or pos + size > end:
+                    return {}
+                if coding[0] in {0x03, 0x04, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0xa1, 0xa2} and size >= 5:
+                    lang = coding[2:5].decode("ascii").lower()
+                    if re.fullmatch("[a-z]{3}", lang):
+                        languages[pid] = lang
+                pos += size
+        return languages
+    except (OSError, ValueError, IndexError, struct.error, UnicodeError):
+        return {}

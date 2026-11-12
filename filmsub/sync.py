@@ -37,6 +37,10 @@ class SyncError(Exception):
     pass
 
 
+class SyncCancelled(SyncError):
+    """Пользователь отменил выбор дорожки; субтитры не изменены."""
+
+
 class NoEnglishTrack(SyncError):
     """В фильме нет английской звуковой дорожки (например, только русская озвучка)."""
 
@@ -248,15 +252,23 @@ class AudioTrack:
     lang: str
     title: str
     default: bool
+    stream_id: int | None = None  # PID: сохраняем ту же дорожку в клипах Blu-ray
 
     def label(self) -> str:
         t = self.lang or "язык не указан"
         return f"{t} «{self.title}»" if self.title else t
 
 
+def _stream_id(value) -> int | None:
+    try:
+        return int(str(value), 0)
+    except (TypeError, ValueError):
+        return None
+
+
 def audio_tracks(video: str, ffprobe: str) -> list[AudioTrack]:
     cmd = [ffprobe, "-v", "error", "-select_streams", "a", "-show_entries",
-           "stream=index:stream_tags=language,title:stream_disposition=default", "-of", "json", video]
+           "stream=index,id:stream_tags=language,title:stream_disposition=default", "-of", "json", video]
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
         out = subprocess.run(cmd, capture_output=True, timeout=120, creationflags=flags).stdout
@@ -268,7 +280,8 @@ def audio_tracks(video: str, ffprobe: str) -> list[AudioTrack]:
         tags = {k.lower(): v for k, v in (st.get("tags") or {}).items()}
         tracks.append(AudioTrack(n, str(tags.get("language", "")).strip().lower(),
                                  str(tags.get("title", "")).strip(),
-                                 bool((st.get("disposition") or {}).get("default"))))
+                                 bool((st.get("disposition") or {}).get("default")),
+                                 _stream_id(st.get("id"))))
     return tracks
 
 
@@ -282,6 +295,26 @@ def pick_english(tracks: list[AudioTrack]) -> AudioTrack | None:
     unk = [t for t in tracks if t.lang in UNKNOWN_LANGS and not is_comment(t)
            and not any(w in t.title.lower() for w in ("rus", "рус", "дубл", "mvo", "dvo", "avo"))]
     return unk[0] if unk else None
+
+
+def select_audio(tracks: list[AudioTrack], choose_track=None, allow_other_lang=False) -> AudioTrack:
+    """Ручной выбор имеет приоритет; без него сохраняется английский режим перевода."""
+    if not tracks:
+        raise SyncError("В фильме нет звуковых дорожек")
+    if choose_track is not None:
+        number = choose_track(tracks)
+        if number is None:
+            raise SyncCancelled("Синхронизация отменена")
+        track = next((t for t in tracks if t.n == number), None)
+        if track is None:
+            raise SyncError("Выбранная звуковая дорожка отсутствует")
+        return track
+    track = pick_english(tracks)
+    if track is not None:
+        return track
+    if not allow_other_lang:
+        raise NoEnglishTrack([t.label() for t in tracks])
+    return tracks[0]
 
 
 def _wait(proc, stop_flag, limit, name):
@@ -352,10 +385,12 @@ def nosplit_flag(alass: str) -> str:
     return _NOSPLIT_FLAG[alass]
 
 
-def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
+def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False, choose_track=None):
     if not os.path.isdir(video):
-        return _align_file(video, cues, log, stop_flag, allow_other_lang)
-    from .disc import main_feature, dvd_languages
+        if choose_track is None:
+            return _align_file(video, cues, log, stop_flag, allow_other_lang)
+        return _align_file(video, cues, log, stop_flag, allow_other_lang, choose_track=choose_track)
+    from .disc import main_feature, dvd_languages, bluray_languages
     try:
         name, clips = main_feature(video)
     except (OSError, ValueError) as e:
@@ -381,17 +416,25 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
             tracks = audio_tracks(str(clip), ffprobe)
             if not tracks:
                 raise SyncError("В части фильма нет звуковых дорожек")
+            clip_languages = bluray_languages(video, str(clip)) if start is not None else {}
+            for t in tracks:
+                if t.lang in UNKNOWN_LANGS and t.stream_id in clip_languages:
+                    t.lang = clip_languages[t.stream_id]
             for t, lang in zip(tracks, languages):
                 if lang:
                     t.lang = lang
-            track = pick_english(tracks)
-            if track is None:
-                if not allow_other_lang:
-                    raise NoEnglishTrack([t.label() for t in tracks])
-                track = tracks[0]
             if selected is None:
+                track = select_audio(tracks, choose_track, allow_other_lang)
                 selected = track
                 log(f"  Звуковая дорожка для сверки: №{track.n + 1}, {track.label()}")
+            else:
+                # Один выбор для всего фильма, без переключения языка между клипами.
+                track = next((t for t in tracks if (
+                    t.stream_id == selected.stream_id if selected.stream_id is not None
+                    else t.n == selected.n)), None)
+                if track is None or (track.lang not in UNKNOWN_LANGS and selected.lang not in UNKNOWN_LANGS
+                                     and track.lang != selected.lang):
+                    raise SyncError("Выбранная дорожка отсутствует или имеет другой язык в части фильма")
             dest = os.path.join(tmp, f"part_{i}.flac")
             _extract_track(str(clip), track.n, ffmpeg, dest, stop_flag,
                            interval=(start, end) if start is not None else None)
@@ -418,10 +461,11 @@ def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=Fal
         return new, report
 
 
-def _align_file(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
+def _align_file(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False, choose_track=None):
     """Сверяет реплики со звуком. Возвращает (новые реплики, отчёт); реплики не меняет.
 
-    Сверка идёт по английской дорожке. alass запускается дважды: единый сдвиг для всего фильма
+    Для перевода по умолчанию используется английская дорожка, для ручной сверки — выбранная.
+    alass запускается дважды: единый сдвиг для всего фильма
     и сдвиг по частям; если результаты сильно расходятся, сверке нельзя доверять."""
     tools = find_tools()
     if not tools:
@@ -430,13 +474,8 @@ def _align_file(video: str, cues: list[Cue], log, stop_flag=None, allow_other_la
     tracks = audio_tracks(video, ffprobe)
     if not tracks:
         raise SyncError("в файле фильма нет звуковых дорожек")
-    track = pick_english(tracks)
-    if track is None:
-        if not allow_other_lang:
-            raise NoEnglishTrack([t.label() for t in tracks])
-        track = tracks[0]
-        log(f"  ⚠ Английской дорожки нет — сверяю по дорожке {track.label()}")
-    elif len(tracks) > 1 or track.lang not in EN_LANGS:
+    track = select_audio(tracks, choose_track, allow_other_lang)
+    if choose_track is not None or len(tracks) > 1 or track.lang not in EN_LANGS:
         log(f"  Звуковая дорожка для сверки: №{track.n + 1}, {track.label()}")
     env = dict(os.environ, ALASS_FFMPEG_PATH=ffmpeg, ALASS_FFPROBE_PATH=ffprobe)
     with tempfile.TemporaryDirectory() as tmp:
@@ -521,12 +560,13 @@ def sync_cues(video: str, cues: list[Cue], log, stop_flag=None) -> SyncReport:
 
 
 def sync_subtitles(video: str, srt_path: str, log, encoding="utf-8-sig", stop_flag=None,
-                   allow_other_lang=False) -> SyncReport:
+                   allow_other_lang=False, choose_track=None) -> SyncReport:
     old = read_srt(srt_path)
     if not old:
         raise SyncError("Файл субтитров пустой")
     log(f"  Синхронизирую {os.path.basename(srt_path)} по звуку {os.path.basename(video)}…")
-    new, report = align(video, old, log, stop_flag, allow_other_lang=allow_other_lang)
+    new, report = align(video, old, log, stop_flag, allow_other_lang=allow_other_lang,
+                        choose_track=choose_track)
     if report.status == "changed":
         saved = backup(srt_path)
         for o, n in zip(old, new):

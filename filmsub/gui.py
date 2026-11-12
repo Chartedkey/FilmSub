@@ -20,7 +20,7 @@ from .review import ReviewError, estimate, find_english_for, is_russian_file, ru
 from .config import Settings, load_settings, save_settings
 from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
-from .sync import NoEnglishTrack, SyncError, download_tools, find_tools, find_video_for, sync_subtitles
+from .sync import SyncCancelled, SyncError, download_tools, find_tools, find_video_for, sync_subtitles
 from .translator import FileTranslator, collect_inputs, output_path_for
 from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest, cleanup_old,
                       download, is_newer)
@@ -1118,6 +1118,16 @@ class App(tk.Tk):
                 return False
         return box["answer"]
 
+    def _choose_audio(self, source, tracks):
+        """Передаёт выбор дорожки GUI-потоку и ждёт ответ либо остановку."""
+        box = {"answer": None}
+        event = threading.Event()
+        self.q.put(("choose_audio", source, tracks, box, event))
+        while not event.wait(0.3):
+            if self.stop_event.is_set():
+                return None
+        return None if self.stop_event.is_set() else box["answer"]
+
     def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
         """Синхронизирует .ru.srt этого фильма (или выбранный русский файл, например .ru.v2.srt)."""
         out = out or (path if is_russian_file(path) else output_path_for(path))
@@ -1133,17 +1143,11 @@ class App(tk.Tk):
             return "нет alass"
         log = lambda t: self.q.put(("log", t))  # noqa: E731
         try:
-            try:
-                rep = sync_subtitles(video, out, log, encoding=s.encoding, stop_flag=self.stop_event.is_set)
-            except NoEnglishTrack as e:
-                log(f"  ⚠ {str(e).capitalize()}")
-                if not self._ask_main(
-                        f"{os.path.basename(video)}: {e}.\n\nСверка по озвучке часто ошибается: "
-                        "переведённая речь звучит не там, где английская. Всё равно синхронизировать?\n\n"
-                        "(Копия субтитров сохранится, файл можно будет вернуть.)"):
-                    return "нет англ. дорожки"
-                rep = sync_subtitles(video, out, log, encoding=s.encoding, stop_flag=self.stop_event.is_set,
-                                     allow_other_lang=True)
+            rep = sync_subtitles(video, out, log, encoding=s.encoding, stop_flag=self.stop_event.is_set,
+                                 choose_track=lambda tracks: self._choose_audio(video, tracks))
+        except SyncCancelled:
+            log("  Синхронизация отменена — субтитры не изменены")
+            return "синхр. отменена"
         except SyncError as e:
             self.q.put(("log", f"  ✖ {e}"))
             return "ошибка синхр."
@@ -1353,6 +1357,12 @@ class App(tk.Tk):
                 elif kind == "ask":
                     msg[2]["answer"] = messagebox.askyesno("FilmSub", msg[1])
                     msg[3].set()
+                elif kind == "choose_audio":
+                    from .gui_audio import choose_audio
+                    try:
+                        msg[3]["answer"] = choose_audio(self, msg[1], msg[2], self.stop_event.is_set)
+                    finally:
+                        msg[4].set()
                 elif kind == "update":
                     self._on_update_info(msg[1], msg[2], msg[3])
                 elif kind == "restart":
