@@ -1008,6 +1008,26 @@ class App(tk.Tk):
                 return find_video_for(en) or self._video_for(en, s)
         return None
 
+    def _pick_film(self, parent, path):
+        kind = messagebox.askyesnocancel(
+            "Источник звука", "Выбрать папку DVD / Blu-ray?\n\n"
+            "Да — папка VIDEO_TS, BDMV или корень диска.\nНет — отдельный видеофайл.", parent=parent)
+        if kind is None:
+            return ""
+        if kind:
+            folder = filedialog.askdirectory(parent=parent, title="Папка DVD / Blu-ray",
+                                             initialdir=os.path.dirname(path))
+            if folder:
+                from .disc import disc_folder
+                if disc_folder(folder) is None:
+                    messagebox.showerror("FilmSub", "В папке не найдены VIDEO_TS или BDMV", parent=parent)
+                    return ""
+            return folder
+        return filedialog.askopenfilename(
+            parent=parent, title="Файл фильма", initialdir=os.path.dirname(path),
+            filetypes=[("Видео", "*.mkv *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"),
+                       ("Все файлы", "*.*")])
+
     def choose_film(self):
         """Указать (или сменить) файл фильма для выбранных субтитров — для голосов и синхронизации."""
         if self.worker:
@@ -1024,10 +1044,7 @@ class App(tk.Tk):
         key = os.path.normcase(os.path.abspath(path))
         cur = s.video_map.get(key)
         near = find_video_for(path)
-        f = filedialog.askopenfilename(
-            parent=self, title=f"Фильм для {os.path.basename(path)}",
-            initialdir=os.path.dirname(cur or path),
-            filetypes=[("Видео", "*.mkv *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"), ("Все файлы", "*.*")])
+        f = self._pick_film(self, cur or path)
         if not f:
             if cur and messagebox.askyesno("FilmSub", f"Сейчас для этих субтитров указан фильм:\n{cur}\n\n"
                                                       "Забыть его? Тогда перед переводом программа спросит снова."):
@@ -1062,10 +1079,7 @@ class App(tk.Tk):
                 dlg.destroy()
 
             def pick(p=p, dlg=dlg):
-                f = filedialog.askopenfilename(
-                    parent=dlg, title="Файл фильма", initialdir=os.path.dirname(p),
-                    filetypes=[("Видео", "*.mkv *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"),
-                               ("Все файлы", "*.*")])
+                f = self._pick_film(dlg, p)
                 if f:
                     choose(f)
 

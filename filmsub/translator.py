@@ -831,7 +831,12 @@ def collect_inputs(paths: list[str]) -> list[str]:
     seen = set()
     for p in paths:
         if os.path.isdir(p):
-            for root, _, files in os.walk(p):
+            for root, dirs, files in os.walk(p):
+                # Внутренние клипы диска не являются отдельными заданиями перевода.
+                dirs[:] = [d for d in dirs if d.upper() not in {"VIDEO_TS", "BDMV"}]
+                if os.path.basename(root).upper() in {"VIDEO_TS", "BDMV"}:
+                    dirs[:] = []
+                    continue
                 for name in sorted(files):
                     full = os.path.join(root, name)
                     ext = os.path.splitext(name)[1].lower()

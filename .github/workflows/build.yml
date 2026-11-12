@@ -56,6 +56,9 @@ jobs:
       - name: Сведения о версии для exe
         run: python tools/make_version_info.py version_info.txt
 
+      - name: Проверить синхронизацию и сохранность перевода
+        run: python -m unittest discover -s tests -v
+
       - name: Проверить, что код компилируется
         run: python -m compileall -q filmsub FilmSub.pyw
 

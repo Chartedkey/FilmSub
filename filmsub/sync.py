@@ -130,6 +130,11 @@ def find_video_for(path: str) -> str | None:
         for cand in (stem + ext, stem + ext.upper()):
             if os.path.exists(cand):
                 return cand
+    from .disc import disc_folder
+    for candidate in (stem, os.path.dirname(path)):
+        folder = disc_folder(candidate)
+        if folder is not None:
+            return str(folder)
     return None
 
 
@@ -293,10 +298,14 @@ def _wait(proc, stop_flag, limit, name):
         time.sleep(0.3)
 
 
-def _extract_track(video: str, track: int, ffmpeg: str, dest: str, stop_flag=None) -> None:
+def _extract_track(video: str, track: int, ffmpeg: str, dest: str, stop_flag=None, interval=None) -> None:
     """Вынимает одну звуковую дорожку в отдельный файл (моно 16 кГц, FLAC) — для alass."""
     cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-i", video, "-map", f"0:a:{track}", "-vn", "-sn",
            "-ac", "1", "-ar", "16000", "-c:a", "flac", dest]
+    if interval is not None:
+        start, end = interval
+        cmd[5:5] = ["-copyts"]
+        cmd[-1:-1] = ["-ss", str(start), "-t", str(end - start)]
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
@@ -344,6 +353,72 @@ def nosplit_flag(alass: str) -> str:
 
 
 def align(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
+    if not os.path.isdir(video):
+        return _align_file(video, cues, log, stop_flag, allow_other_lang)
+    from .disc import main_feature, dvd_languages
+    try:
+        name, clips = main_feature(video)
+    except (OSError, ValueError) as e:
+        raise SyncError(f"Не удалось прочитать диск: {e}") from e
+    tools = find_tools()
+    if not tools:
+        raise SyncError("Инструменты синхронизации не установлены")
+    _, ffmpeg, ffprobe = tools
+    log(f"  Основной фильм: {name}, частей: {len(clips)}")
+    languages = dvd_languages(video, name) if name.startswith("DVD ") else []
+    # VOB разделены по размеру, в том числе посреди пакетов: читаем как один поток.
+    if clips[0][1] is None:
+        paths = [os.path.abspath(p) for p, _, _ in clips]
+        if any("|" in p for p in paths):
+            raise SyncError("Путь DVD не должен содержать символ |")
+        clips = [("concat:" + "|".join(paths), None, None)]
+    with tempfile.TemporaryDirectory() as tmp:
+        pieces = []
+        selected = None
+        for i, (clip, start, end) in enumerate(clips):
+            if stop_flag and stop_flag():
+                raise SyncError("Остановлено")
+            tracks = audio_tracks(str(clip), ffprobe)
+            if not tracks:
+                raise SyncError("В части фильма нет звуковых дорожек")
+            for t, lang in zip(tracks, languages):
+                if lang:
+                    t.lang = lang
+            track = pick_english(tracks)
+            if track is None:
+                if not allow_other_lang:
+                    raise NoEnglishTrack([t.label() for t in tracks])
+                track = tracks[0]
+            if selected is None:
+                selected = track
+                log(f"  Звуковая дорожка для сверки: №{track.n + 1}, {track.label()}")
+            dest = os.path.join(tmp, f"part_{i}.flac")
+            _extract_track(str(clip), track.n, ffmpeg, dest, stop_flag,
+                           interval=(start, end) if start is not None else None)
+            pieces.append(dest)
+        # Декодированные части имеют одинаковый формат и начинаются с нуля.
+        manifest = os.path.join(tmp, "audio.ffconcat")
+        with open(manifest, "w", encoding="utf-8") as f:
+            f.write("ffconcat version 1.0\n")
+            for p in pieces:
+                f.write(f"file '{os.path.basename(p)}'\n")
+        ref = os.path.join(tmp, "audio.mkv")
+        cmd = [ffmpeg, "-v", "error", "-nostdin", "-y", "-f", "concat", "-i", manifest,
+               "-c", "copy", ref]
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except OSError as e:
+            raise SyncError(f"Не удалось запустить ffmpeg: {e}") from e
+        _wait(proc, stop_flag, 1800, "ffmpeg")
+        if proc.returncode != 0:
+            raise SyncError("ffmpeg не смог объединить звук диска")
+        new, report = _align_file(ref, cues, log, stop_flag, allow_other_lang=True)
+        report.track = selected.n
+        return new, report
+
+
+def _align_file(video: str, cues: list[Cue], log, stop_flag=None, allow_other_lang=False):
     """Сверяет реплики со звуком. Возвращает (новые реплики, отчёт); реплики не меняет.
 
     Сверка идёт по английской дорожке. alass запускается дважды: единый сдвиг для всего фильма
