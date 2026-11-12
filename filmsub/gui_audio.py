@@ -1,4 +1,4 @@
-"""Выбор языка оригинала для синхронизации с готовыми субтитрами."""
+"""Выбор звуковых дорожек для синхронизации и текстовых субтитров для перевода."""
 from __future__ import annotations
 
 import os
@@ -28,25 +28,51 @@ def track_label(track: AudioTrack) -> str:
     return f"№{track.n + 1} — {label}"
 
 
-def choose_audio(parent, source: str, tracks: list[AudioTrack], stop_flag=None) -> int | None:
+def choose_audio(parent, source, tracks, stop_flag=None):
+    return _choose_track(parent, source, tracks, stop_flag)
+
+
+def choose_subtitles(parent, source, tracks, stop_flag=None):
+    return _choose_track(parent, source, tracks, stop_flag, subtitles=True)
+
+
+def subtitle_label(track):
+    if track.number == -1:
+        return track.name
+    language = LANG_NAMES.get(track.language.lower(), track.language or "язык не указан")
+    label = f"№{getattr(track, 'display_number', track.number)} — {language} ({track.codec})"
+    if track.name:
+        label += f" «{track.name}»"
+    if track.forced:
+        label += " — только отдельные реплики (forced)"
+    if track.is_sdh:
+        label += " — SDH"
+    return label
+
+
+def _choose_track(parent, source, tracks, stop_flag=None, subtitles=False):
     """Вызывается в GUI-потоке; закрытие окна и отмена возвращают None."""
     if stop_flag and stop_flag():
         return None
     result = None
     dlg = tk.Toplevel(parent)
-    dlg.title("Звуковая дорожка для синхронизации")
+    dlg.title("Субтитры для перевода" if subtitles else "Звуковая дорожка для синхронизации")
     dlg.transient(parent)
     dlg.resizable(True, False)
     frame = ttk.Frame(dlg, padding=16)
     frame.pack(fill="both", expand=True)
     ttk.Label(frame, text=os.path.basename(source), wraplength=600).pack(anchor="w")
-    ttk.Label(frame, text="Выберите оригинальную звуковую дорожку фильма — на любом языке.\n"
-                         "Например, для французского фильма выберите французскую речь.\n"
-                         "Дубляж и комментарии могут давать неточное совпадение с субтитрами.",
-              justify="left", wraplength=600).pack(anchor="w", pady=(8, 12))
+    intro = ("Выберите текстовые субтитры для перевода на русский.\n"
+             "Проверьте язык и название: forced обычно содержит лишь отдельные реплики."
+             if subtitles else
+             "Выберите оригинальную звуковую дорожку фильма — на любом языке.\n"
+             "Например, для французского фильма выберите французскую речь.\n"
+             "Дубляж и комментарии могут давать неточное совпадение с субтитрами.")
+    ttk.Label(frame, text=intro, justify="left", wraplength=600).pack(anchor="w", pady=(8, 12))
+    numbers = [t.number if subtitles else t.n for t in tracks]
     choices = tk.Listbox(frame, height=min(8, len(tracks)), width=76, exportselection=False)
     for track in tracks:
-        choices.insert("end", track_label(track))
+        choices.insert("end", subtitle_label(track) if subtitles else track_label(track))
     choices.pack(fill="x")
 
     def close(number=None):
@@ -57,11 +83,11 @@ def choose_audio(parent, source: str, tracks: list[AudioTrack], stop_flag=None) 
     def confirm(event=None):
         selection = choices.curselection()
         if selection:
-            close(tracks[selection[0]].n)
+            close(numbers[selection[0]])
 
     buttons = ttk.Frame(frame)
     buttons.pack(fill="x", pady=(14, 0))
-    ok = ttk.Button(buttons, text="Синхронизировать", command=confirm, state="disabled")
+    ok = ttk.Button(buttons, text="Переводить" if subtitles else "Синхронизировать", command=confirm, state="disabled")
     ok.pack(side="right")
     ttk.Button(buttons, text="Отмена", command=close).pack(side="right", padx=8)
     choices.bind("<<ListboxSelect>>", lambda _: ok.configure(

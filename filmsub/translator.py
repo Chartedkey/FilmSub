@@ -134,9 +134,11 @@ class Source:
     cues: list[Cue]
     description: str
     output: str
+    language: str = "en"
 
 
-def load_source(path: str, settings: Settings, log, progress=None) -> Source | None:
+def load_source(path: str, settings: Settings, log, progress=None, choose_subtitles=None,
+                ensure_tools=None, stop_flag=None) -> Source | None:
     ext = os.path.splitext(path)[1].lower()
     out = output_path_for(path)
 
@@ -159,6 +161,9 @@ def load_source(path: str, settings: Settings, log, progress=None) -> Source | N
     if ext not in VIDEO_EXT:
         log("  Неподдерживаемый формат — пропускаю")
         return None
+
+    if choose_subtitles is not None:
+        return _choose_source(path, settings, log, progress, choose_subtitles, ensure_tools, stop_flag)
 
     side = find_sidecar_srt(path)
     if side:
@@ -200,6 +205,61 @@ def load_source(path: str, settings: Settings, log, progress=None) -> Source | N
         log(f"  ✖ Дорожка {best.describe()} помечена как английская, но в ней русский текст — пропускаю")
         return None
     return Source(best.cues, f"дорожка {best.describe()} из MKV", out)
+
+
+def _choose_source(path, settings, log, progress, choose_subtitles, ensure_tools, stop_flag):
+    from .embedded import SubtitleError, SubtitleCancelled, media_tools, list_tracks, extract
+    side = find_sidecar_srt(path)
+    side_cues = read_srt(side) if side else []
+    if side_cues and text_language(side_cues) == "ru":
+        side_cues = []
+    tools = None
+    if not path.lower().endswith(".mkv"):
+        tools = media_tools()
+        if not tools and ensure_tools and ensure_tools():
+            tools = media_tools()
+        if not tools and side_cues:
+            log("  ffmpeg недоступен — использую английский SRT рядом с фильмом")
+            return Source(side_cues, f"файл {os.path.basename(side)}", output_path_for(path))
+    try:
+        tracks = list_tracks(path, tools)
+        options = [t for t in tracks if t.is_text]
+        if side_cues:
+            from .mkv import SubTrack
+            options.insert(0, SubTrack(-1, "S_TEXT/UTF8", "en", f"Файл рядом: {os.path.basename(side)}"))
+        if not options:
+            if tracks:
+                log("  Встроенные субтитры графические — потребуется OCR; текстовых дорожек нет")
+            else:
+                log("  В фильме нет встроенных субтитров и английского SRT рядом")
+            return None
+        number = choose_subtitles(options)
+        if number is None or (stop_flag and stop_flag()):
+            raise SubtitleCancelled("Выбор субтитров отменён")
+        selected = next((t for t in options if t.number == number), None)
+        if selected is None:
+            raise SubtitleError("Выбранная дорожка субтитров отсутствует")
+        if number == -1:
+            return Source(side_cues, f"файл {os.path.basename(side)}", output_path_for(path))
+        if selected.is_russian:
+            log("  Выбрана русская дорожка — перевод на русский не нужен")
+            return None
+        log(f"  Извлекаю текстовые субтитры: {selected.describe()}")
+        cues = extract(path, selected, tools, stop_flag, progress)
+        if not cues:
+            log("  Выбранная дорожка субтитров пустая")
+            return None
+        if text_language(cues) == "ru":
+            log("  В выбранной дорожке русский текст — перевод на русский не нужен")
+            return None
+        return Source(cues, f"дорожка {selected.describe()}", output_path_for(path), selected.language)
+    except SubtitleCancelled:
+        raise
+    except (SubtitleError, MkvError, OSError) as e:
+        if stop_flag and stop_flag():
+            raise SubtitleCancelled("Остановлено") from e
+        log(f"  Ошибка чтения субтитров: {e}")
+        return None
 
 
 # --------------------------------------------------------------------------
@@ -390,8 +450,11 @@ def finalize(ru: str, en: str) -> str:
 
 class FileTranslator:
     def __init__(self, settings: Settings, log, progress=None, stop_flag=None, usage_cb=None,
-                 style: str | None = None):
+                 style: str | None = None, choose_subtitles=None, ensure_tools=None):
         self.s = settings
+        self.choose_subtitles = choose_subtitles
+        self.ensure_tools = ensure_tools
+        self._source_language = "en"
         # classic — проверенный промпт без изменений; new — с правилами про идиомы и словарём
         self.style = style or getattr(settings, "prompt_style", "classic")
         self.log = log
@@ -459,7 +522,7 @@ class FileTranslator:
             step = len(lines) / (limit / 60)
             text = "\n".join(lines[int(i * step)] for i in range(int(len(lines) / step)))
         user = f"Имя файла: {title_hint}\n\nСубтитры:\n{text}"
-        system = ANALYSIS_SYSTEM + (ANALYSIS_GLOSSARY_ADDON if self.style == "new" else "")
+        system = self._source_prompt(ANALYSIS_SYSTEM + (ANALYSIS_GLOSSARY_ADDON if self.style == "new" else ""))
         content, usage = self.client.chat_retry(
             system, user, max_tokens=8000, temperature=0.3, json_mode=False,
             stop_flag=self.stop_flag, log=self.log)
@@ -476,6 +539,17 @@ class FileTranslator:
             entries = Glossary().relevant("\n".join(c.text for c in cues), extra=entries, limit=100,
                                           use_base=False)
         return notes[:4000], entries
+
+    def _source_prompt(self, prompt: str) -> str:
+        lang = getattr(self, "_source_language", "en").lower()
+        if lang == "eng" or lang.startswith("en"):
+            return prompt
+        for old, new in (("английские субтитры", "исходные субтитры"),
+                         ("английское выражение", "выражение на языке оригинала"),
+                         ("Английское выражение", "Выражение на языке оригинала")):
+            prompt = prompt.replace(old, new)
+        return prompt + (f"\nЯзык исходной дорожки: {lang}. Переводи исходный текст на русский. "
+                         "Поле en в JSON содержит исходный текст, который может быть на любом языке.")
 
     def build_system(self, notes: str, cues: list[Cue], film_entries: list[Entry]) -> str:
         """Системный промпт одинаков для всех пачек (кэшируется у провайдера).
@@ -495,11 +569,11 @@ class FileTranslator:
                 where = ", ".join(x for x in (self._region, str(self._year or "")) if x)
                 self.log(f"  Подсказок из словаря для фильма: {len(total)}"
                          + (f" (с учётом: {where})" if where else ""))
-        return TRANSLATE_SYSTEM.format(
+        return self._source_prompt(TRANSLATE_SYSTEM.format(
             profanity=PROFANITY.get(self.s.profanity, PROFANITY["asis"]),
             notes=notes or "(нет — ориентируйся по контексту)",
             extra=extra,
-        )
+        ))
 
     def _prepare(self, cues: list[Cue]) -> list[Cue]:
         for c in cues:
@@ -688,9 +762,12 @@ class FileTranslator:
         self._voice_labels_path = (out_ru[:-len(".ru.srt")] if out_ru.endswith(".ru.srt")
                                    else os.path.splitext(out_ru)[0]) + ".voices.srt"
         src = load_source(path, self.s, self.log,
-                          progress=lambda f: self.progress(f * 0.05, "Чтение MKV"))
+                          progress=lambda f: self.progress(f * 0.05, "Чтение субтитров"),
+                          choose_subtitles=self.choose_subtitles, ensure_tools=self.ensure_tools,
+                          stop_flag=self.stop_flag)
         if not src:
             return {"status": "skipped"}
+        self._source_language = src.language
         cues = self._prepare(src.cues)
         if not cues:
             self.log("  Субтитры пустые — пропускаю")
@@ -721,7 +798,8 @@ class FileTranslator:
                 pass
 
         try:
-            if (video and self.style == "new" and getattr(self.s, "detect_voices", False)
+            if (video and self._source_language.lower().startswith("en")
+                    and self.style == "new" and getattr(self.s, "detect_voices", False)
                     and not getattr(self, "_voices", None)):
                 self._prepare_voices(video, cues)
                 self._save_cache(cache, notes, cues, entries)

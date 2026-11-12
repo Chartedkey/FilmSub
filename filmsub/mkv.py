@@ -230,7 +230,7 @@ def _decode_payload(track: SubTrack, data: bytes) -> str:
     return text.replace("\r\n", "\n")
 
 
-def read_mkv_subtitles(path: str, wanted=None, progress=None) -> list[SubTrack]:
+def read_mkv_subtitles(path: str, wanted=None, progress=None, stop_flag=None) -> list[SubTrack]:
     """Читает список субтитровых дорожек и (для дорожек из wanted) их содержимое.
 
     wanted — функция SubTrack -> bool; если None, только список дорожек без чтения реплик.
@@ -262,6 +262,8 @@ def read_mkv_subtitles(path: str, wanted=None, progress=None) -> list[SubTrack]:
         cluster_tc = 0
         cluster_end = None
         while f.tell() < seg_end:
+            if stop_flag and stop_flag():
+                raise MkvError("Остановлено")
             pos = f.tell()
             if cluster_end is not None and pos >= cluster_end:
                 cluster_end = None

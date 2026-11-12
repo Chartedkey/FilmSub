@@ -21,6 +21,7 @@ from .config import Settings, load_settings, save_settings
 from .compare import run_compare
 from .glossary import Glossary, load_base, normalize
 from .sync import SyncCancelled, SyncError, download_tools, find_tools, find_video_for, sync_subtitles
+from .embedded import SubtitleCancelled
 from .translator import FileTranslator, collect_inputs, output_path_for
 from .updater import (RELEASES_PAGE, UpdateError, apply_and_restart, can_self_update, check_latest, cleanup_old,
                       download, is_newer)
@@ -703,7 +704,7 @@ class App(tk.Tk):
         paths = filedialog.askopenfilenames(
             title="Выберите фильмы или субтитры",
             initialdir=self.s.last_dir or None,
-            filetypes=[("Фильмы и субтитры", "*.mkv *.srt *.mp4 *.avi"), ("Все файлы", "*.*")])
+            filetypes=[("Фильмы и субтитры", "*.mkv *.srt *.mp4 *.avi *.m4v *.mov *.ts *.m2ts *.webm"), ("Все файлы", "*.*")])
         if paths:
             self.s.last_dir = os.path.dirname(paths[0])
             self.add_paths(list(paths))
@@ -1128,6 +1129,15 @@ class App(tk.Tk):
                 return None
         return None if self.stop_event.is_set() else box["answer"]
 
+    def _choose_subtitles(self, source, tracks):
+        box = {"answer": None}
+        event = threading.Event()
+        self.q.put(("choose_subtitles", source, tracks, box, event))
+        while not event.wait(0.3):
+            if self.stop_event.is_set():
+                return None
+        return None if self.stop_event.is_set() else box["answer"]
+
     def _sync_one(self, iid, path, s: Settings, out: str | None = None) -> str:
         """Синхронизирует .ru.srt этого фильма (или выбранный русский файл, например .ru.v2.srt)."""
         out = out or (path if is_russian_file(path) else output_path_for(path))
@@ -1269,7 +1279,9 @@ class App(tk.Tk):
                 self.q.put(("cost", base + tr.cost(), tr.usage.cost_usd is not None and exact))
 
             tr = FileTranslator(s, log=lambda t: self.q.put(("log", t)), progress=progress,
-                                stop_flag=self.stop_event.is_set, usage_cb=on_usage)
+                                stop_flag=self.stop_event.is_set, usage_cb=on_usage,
+                                choose_subtitles=lambda tracks, p=path: self._choose_subtitles(p, tracks),
+                                ensure_tools=self._ensure_tools)
             try:
                 video = None
                 if s.prompt_style == "new" and s.detect_voices:
@@ -1280,6 +1292,10 @@ class App(tk.Tk):
                     if video and not find_tools() and not self._ensure_tools():
                         video = None
                 res = tr.translate(path, existing=mode, video=video)
+            except SubtitleCancelled:
+                self.q.put(("log", "  Выбор субтитров отменён — перевод не начат"))
+                self.q.put(("status", iid, "отменено", "skip"))
+                continue
             except ApiError as e:
                 self.q.put(("log", f"  ✖ {e}"))
                 self.q.put(("status", iid, "ошибка", "error"))
@@ -1357,10 +1373,11 @@ class App(tk.Tk):
                 elif kind == "ask":
                     msg[2]["answer"] = messagebox.askyesno("FilmSub", msg[1])
                     msg[3].set()
-                elif kind == "choose_audio":
-                    from .gui_audio import choose_audio
+                elif kind in ("choose_audio", "choose_subtitles"):
+                    from .gui_audio import choose_audio, choose_subtitles
+                    choose = choose_subtitles if kind == "choose_subtitles" else choose_audio
                     try:
-                        msg[3]["answer"] = choose_audio(self, msg[1], msg[2], self.stop_event.is_set)
+                        msg[3]["answer"] = choose(self, msg[1], msg[2], self.stop_event.is_set)
                     finally:
                         msg[4].set()
                 elif kind == "update":
