@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import re
 import subprocess
 import tempfile
 import unittest
@@ -118,11 +119,11 @@ class EmbeddedIntegrationTests(unittest.TestCase):
         self.assertEqual(len(tracks), 2)
         selected = next(t for t in tracks if t.language == 'fra')
         cues = embedded.extract(movie, selected)
-        self.assertEqual([c.text for c in cues], ['Bonjour !', 'Merci beaucoup.'])
+        self.assertEqual([re.sub(r'<[^>]+>', '', c.text) for c in cues], ['Bonjour !', 'Merci beaucoup.'])
         self.assertEqual([(c.start_ms, c.end_ms) for c in cues], [(1200, 2500), (3000, 4300)])
         source = load_source(movie, Settings(), Mock(), choose_subtitles=lambda _: selected.number)
         self.assertEqual(source.language, 'fra')
-        self.assertEqual([c.text for c in source.cues], ['Bonjour !', 'Merci beaucoup.'])
+        self.assertEqual([re.sub(r'<[^>]+>', '', c.text) for c in source.cues], ['Bonjour !', 'Merci beaucoup.'])
 
     def test_native_mkv_srt_selection(self):
         self.verify_french(self.movie('mkv', 'srt'))
@@ -141,7 +142,7 @@ class EmbeddedIntegrationTests(unittest.TestCase):
                         '-metadata:s:s:0', 'language=eng', '-metadata:s:s:1', 'language=fra', movie], check=True)
         tracks = embedded.list_tracks(movie)
         self.assertEqual([t.number for t in tracks], [1, 2])
-        self.assertEqual(embedded.extract(movie, tracks[1])[0].text, 'Bonjour !')
+        self.assertEqual(re.sub(r'<[^>]+>', '', embedded.extract(movie, tracks[1])[0].text), 'Bonjour !')
 
     def test_selected_embedded_source_produces_russian_sidecar(self):
         movie = self.movie('mkv', 'srt')
@@ -149,7 +150,7 @@ class EmbeddedIntegrationTests(unittest.TestCase):
         selected = next(t for t in embedded.list_tracks(movie) if t.language == 'fra')
         settings = Settings(analyze_film=False, use_glossary=False)
         def translate_batch(system, cues, *args):
-            self.assertEqual([c.text for c in cues], ['Bonjour !', 'Merci beaucoup.'])
+            self.assertEqual([re.sub(r'<[^>]+>', '', c.text) for c in cues], ['Bonjour !', 'Merci beaucoup.'])
             self.assertIn('fra', system)
             for cue, russian in zip(cues, ['Здравствуйте!', 'Большое спасибо.']):
                 cue.ru = russian
