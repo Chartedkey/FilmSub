@@ -14,6 +14,7 @@ from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from . import __version__
+from .balance import BalanceError, fetch_balance
 from .api import PROVIDERS, ApiError, ChatClient, list_openrouter_models, openrouter_model_info
 from .gui_review import ReviewPanel
 from .review import ReviewError, estimate, find_english_for, is_russian_file, run_review, variant_choices
@@ -45,6 +46,10 @@ class App(tk.Tk):
         self.q: queue.Queue = queue.Queue()
         self.worker: threading.Thread | None = None
         self.stop_event = threading.Event()
+        self._balance_busy = False
+        self._balance_pending = False
+        self._balance_request_id = 0
+        self._balance_credentials = None
         self.items: dict[str, str] = {}   # iid -> путь
 
         self._style()
@@ -73,6 +78,7 @@ class App(tk.Tk):
         self._load_into_widgets()
         self._update_engine_label()
 
+        self.after(800, lambda: self.refresh_balances(save=False))
         self.add_paths(initial_paths)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(100, self._poll)
@@ -108,6 +114,17 @@ class App(tk.Tk):
         self.engine_lbl = ttk.Label(f, style="Hint.TLabel", cursor="hand2")
         self.engine_lbl.pack(anchor="w", pady=(6, 0))
         self.engine_lbl.bind("<Button-1>", lambda e: self.nb.select(self.tab_set))
+
+        balance_bar = ttk.Frame(f)
+        balance_bar.pack(fill="x", pady=(4, 0))
+        self.balance_labels = {}
+        for provider in ("DeepSeek", "OpenRouter"):
+            label = ttk.Label(balance_bar, text=f"{provider}: баланс не проверен", style="Hint.TLabel",
+                              wraplength=700)
+            label.pack(anchor="w")
+            self.balance_labels[provider] = label
+        self.balance_btn = ttk.Button(balance_bar, text="Обновить баланс", command=self.refresh_balances)
+        self.balance_btn.pack(anchor="e", pady=(2, 0))
 
         cols = ("file", "folder", "status")
         tv = ttk.Treeview(f, columns=cols, show="headings", height=8, selectmode="extended")
@@ -208,6 +225,10 @@ class App(tk.Tk):
         return f"Модель-редактор: {model}{price} (сменить — в Настройках)"
 
     def _on_tab(self):
+        if (hasattr(self, "v_management_key") and hasattr(self, "v_rkey")
+                and self._balance_credentials is not None and self.nb.select() == str(self.tab_main)
+                and self._balance_keys() != self._balance_credentials):
+            self.refresh_balances()
         if hasattr(self, "rev") and self.nb.select() == str(self.tab_rev):
             self.rev.update_model()
         if self.nb.select() == str(self.tab_glo):
@@ -386,6 +407,17 @@ class App(tk.Tk):
         self.test_lbl.pack(side="left", padx=10)
         tf.grid(row=4, column=1, sticky="w", pady=(6, 0))
 
+        self.v_management_key = tk.StringVar()
+        self._row(g, 5, "OpenRouter management key:",
+                  ttk.Entry(g, textvariable=self.v_management_key, show="•", width=50))
+        ttk.Label(g, text="Необязательно: только для общего баланса OpenRouter.\n"
+                         "Обычный API-ключ выше используется для перевода. Management key хранится локально.",
+                  style="Hint.TLabel", wraplength=620).grid(row=6, column=1, sticky="w", pady=(0, 4))
+        management_link = ttk.Label(g, text="Создать management key в OpenRouter", style="Hint.TLabel",
+                                    cursor="hand2")
+        management_link.grid(row=7, column=1, sticky="w")
+        management_link.bind("<Button-1>", lambda _: webbrowser.open("https://openrouter.ai/settings/management-keys"))
+
         # --- Цены ---
         self.price_frame = ttk.LabelFrame(f, text="Цены DeepSeek для подсчёта стоимости ($ за 1 млн токенов)",
                                           padding=10)
@@ -541,6 +573,7 @@ class App(tk.Tk):
         self.v_voicelab.set(s.save_voice_labels)
         self.v_rkey.set(s.keys.get("OpenRouter", ""))
         self.v_rmodel.set(s.review_model)
+        self.v_management_key.set(s.openrouter_management_key)
 
     def _provider_changed(self, load=False):
         if not load:
@@ -601,6 +634,7 @@ class App(tk.Tk):
         else:
             s.keys["OpenRouter"] = self.v_rkey.get().strip()
         s.review_model = self.v_rmodel.get().strip()
+        s.openrouter_management_key = self.v_management_key.get().strip()
         try:
             save_settings(s)
         except OSError as e:
@@ -615,6 +649,62 @@ class App(tk.Tk):
             st = self.v_pstyle.get() if hasattr(self, "v_pstyle") else self.s.prompt_style
             st_name = "новый промпт" if st == "new" else "проверенный промпт"
             self.engine_lbl.configure(text=f"Движок: {p} · {m} · {st_name}  ⚙")
+
+    def _balance_keys(self):
+        keys = dict(self.s.keys)
+        keys[self.v_provider.get()] = self.v_key.get().strip()
+        if self.v_provider.get() != "OpenRouter":
+            keys["OpenRouter"] = self.v_rkey.get().strip()
+        # Баланс OpenRouter намеренно не запрашивается ключом для перевода.
+        return (keys.get("DeepSeek", "").strip(), self.v_management_key.get().strip())
+
+    def refresh_balances(self, save=True):
+        if save:
+            self.collect_settings()
+        if self._balance_busy:
+            self._balance_pending = True
+            return
+        keys = self._balance_keys()
+        self._balance_credentials = keys
+        self._balance_request_id += 1
+        request_id = self._balance_request_id
+        self._balance_waiting = set()
+        for provider, key in zip(("DeepSeek", "OpenRouter"), keys):
+            if not key:
+                hint = "укажите API-ключ" if provider == "DeepSeek" else "укажите management key в настройках"
+                self.balance_labels[provider].configure(text=f"{provider}: {hint}")
+                continue
+            self._balance_waiting.add(provider)
+            self.balance_labels[provider].configure(text=f"{provider}: проверяю баланс…")
+        self._balance_busy = bool(self._balance_waiting)
+        self.balance_btn.configure(state="disabled" if self._balance_busy else "normal")
+        for provider, key in zip(("DeepSeek", "OpenRouter"), keys):
+            if provider in self._balance_waiting:
+                threading.Thread(target=self._fetch_balance, args=(request_id, provider, key), daemon=True).start()
+
+    def _fetch_balance(self, request_id, provider, key):
+        try:
+            value = fetch_balance(provider, key).label()
+        except BalanceError as e:
+            value = f"баланс недоступен — {e}"
+        except Exception:
+            # Не выводим исключение сетевой библиотеки, которое может содержать ключ.
+            value = "баланс недоступен — ошибка получения данных"
+        self.q.put(("balance", request_id, provider, value))
+
+    def _show_balance(self, request_id, provider, value):
+        if request_id != self._balance_request_id:
+            return
+        self._balance_waiting.discard(provider)
+        if self._balance_keys() == self._balance_credentials:
+            self.balance_labels[provider].configure(text=f"{provider}: {value} (проверено {time.strftime('%H:%M')})")
+        if not self._balance_waiting:
+            self._balance_busy = False
+            self.balance_btn.configure(state="normal")
+            pending = self._balance_pending or self._balance_keys() != self._balance_credentials
+            self._balance_pending = False
+            if pending:
+                self.refresh_balances(save=False)
 
     def _filter_models(self, _event=None):
         if self.v_provider.get() != "OpenRouter" or not self.all_models:
@@ -1341,7 +1431,9 @@ class App(tk.Tk):
             while True:
                 msg = self.q.get_nowait()
                 kind = msg[0]
-                if kind == "log":
+                if kind == "balance":
+                    self._show_balance(*msg[1:])
+                elif kind == "log":
                     self.log(msg[1])
                 elif kind == "status":
                     self.set_status(msg[1], msg[2], msg[3])
@@ -1354,6 +1446,7 @@ class App(tk.Tk):
                     approx = "" if msg[2] else "≈ "
                     self.cost_lbl.configure(text=f"Потрачено: {approx}${msg[1]:.3f}")
                 elif kind == "finished":
+                    self.refresh_balances(save=False)
                     self.worker = None
                     for b in (self.start_btn, self.sync_btn, self.cmp_btn, self.film_btn, self.rev_btn):
                         b.configure(state="normal")

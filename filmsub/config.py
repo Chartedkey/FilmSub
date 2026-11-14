@@ -40,6 +40,7 @@ class Settings:
     check_updates: bool = True     # проверять обновления при запуске
     detect_voices: bool = False    # экспериментально: пол говорящего по голосу (новый стиль, нужен фильм)
     settings_rev: int = 130        # версия формата настроек (для разовых изменений при обновлении)
+    openrouter_management_key: str = ""  # только для чтения общего баланса, не для перевода
     review_model: str = ""         # модель OpenRouter для «Оценить перевод»
     save_voice_labels: bool = False  # сохранять Фильм.voices.srt с пометками [м]/[ж] для проверки
     video_map: dict = field(default_factory=dict)  # субтитры → фильм, указанный вручную
